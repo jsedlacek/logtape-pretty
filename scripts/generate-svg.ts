@@ -6,7 +6,7 @@ import { getPrettyFormatter } from "../src/index.ts";
 const fixedDate = new Date("2025-01-15T08:11:46.000");
 const now = fixedDate.getTime();
 
-const fmt = getPrettyFormatter({ colorize: true });
+const fmt = getPrettyFormatter({ color: true });
 
 const records = [
   {

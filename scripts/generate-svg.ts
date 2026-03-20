@@ -182,20 +182,22 @@ function generateSvg(lines: Segment[][], theme: Theme): string {
       parts.push(`  <rect x="${Math.round(rectX - 1)}" y="${y - 13}" width="${rectWidth}" height="${17}" rx="2" fill="${bgColor}"/>`);
 
       // Render the whole line as a single <text> with <tspan>s, same as non-bg lines
-      parts.push(`  <text x="${PADDING_X}" y="${y}" font-family="${FONT}" font-size="13">`);
+      let textLine = `  <text x="${PADDING_X}" y="${y}" xml:space="preserve" font-family="${FONT}" font-size="13">`;
       for (const seg of segments) {
         const fill = seg.bg ? theme.fatalText : (seg.fg ? theme.colors[seg.fg] : theme.defaultFill);
-        parts.push(`    <tspan fill="${fill ?? theme.defaultFill}">${escapeXml(seg.text)}</tspan>`);
+        textLine += `<tspan fill="${fill ?? theme.defaultFill}">${escapeXml(seg.text)}</tspan>`;
       }
-      parts.push(`  </text>`);
+      textLine += `</text>`;
+      parts.push(textLine);
     } else {
       // Render as a single <text> with <tspan>s
-      parts.push(`  <text x="${PADDING_X}" y="${y}" font-family="${FONT}" font-size="13">`);
+      let textLine = `  <text x="${PADDING_X}" y="${y}" xml:space="preserve" font-family="${FONT}" font-size="13">`;
       for (const seg of segments) {
         const fill = seg.fg ? theme.colors[seg.fg] : theme.defaultFill;
-        parts.push(`    <tspan fill="${fill ?? theme.defaultFill}">${escapeXml(seg.text)}</tspan>`);
+        textLine += `<tspan fill="${fill ?? theme.defaultFill}">${escapeXml(seg.text)}</tspan>`;
       }
-      parts.push(`  </text>`);
+      textLine += `</text>`;
+      parts.push(textLine);
     }
   }
 

@@ -1,11 +1,6 @@
-const pad2 = (n: number): string => n < 10 ? `0${n}` : `${n}`;
-const pad3 = (n: number): string => n < 10 ? `00${n}` : n < 100 ? `0${n}` : `${n}`;
-const pad4 = (n: number): string => {
-  if (n < 10) return `000${n}`;
-  if (n < 100) return `00${n}`;
-  if (n < 1000) return `0${n}`;
-  return `${n}`;
-};
+const pad2 = (n: number): string => String(n).padStart(2, "0");
+const pad3 = (n: number): string => String(n).padStart(3, "0");
+const pad4 = (n: number): string => String(n).padStart(4, "0");
 
 interface DateParts {
   yyyy: string;

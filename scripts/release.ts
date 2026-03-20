@@ -1,5 +1,7 @@
 import { execSync } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, unlinkSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const BUMP = (process.argv[2] ?? "patch") as "patch" | "minor" | "major";
 
@@ -64,7 +66,13 @@ const body = `## What's Changed\n\n${log}\n\n**Full Changelog**: https://github.
 
 // Create GitHub release
 console.log("Creating GitHub release...");
-run(`gh release create v${newVersion} --title "v${newVersion}" --notes ${JSON.stringify(body)}`);
+const notesFile = join(tmpdir(), `release-notes-${newVersion}.md`);
+writeFileSync(notesFile, body);
+try {
+  run(`gh release create v${newVersion} --title "v${newVersion}" --notes-file "${notesFile}"`);
+} finally {
+  unlinkSync(notesFile);
+}
 
 console.log(`\nRelease v${newVersion} created!`);
 console.log("The publish workflow will now build and push to npm.");

@@ -24,8 +24,7 @@
   "scripts": {
     "build": "tsup",
     "test": "node --experimental-strip-types --test src/**/*.test.ts",
-    "demo": "node --experimental-strip-types examples/basic.ts",
-    "demo:logtape": "node --experimental-strip-types examples/logtape.ts",
+    "demo": "node --experimental-strip-types examples/logtape.ts",
     "lint": "tsc --noEmit",
     "prepublishOnly": "pnpm run build",
     "release": "node --experimental-strip-types scripts/release.ts",

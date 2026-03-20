@@ -24,7 +24,8 @@
   "scripts": {
     "build": "tsup",
     "test": "node --experimental-strip-types --test src/**/*.test.ts",
-    "demo": "node --experimental-strip-types demo.ts",
+    "demo": "node --experimental-strip-types examples/basic.ts",
+    "demo:logtape": "node --experimental-strip-types examples/logtape.ts",
     "lint": "tsc --noEmit",
     "prepublishOnly": "pnpm run build",
     "release": "node --experimental-strip-types scripts/release.ts",
@@ -46,6 +47,7 @@
     "url": "https://github.com/jsedlacek/logtape-pretty"
   },
   "devDependencies": {
+    "@logtape/logtape": "^2.0.4",
     "@types/node": "^25.5.0",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3"

@@ -1,4 +1,4 @@
-import { getPrettyFormatter } from "./src/index.ts";
+import { getPrettyFormatter } from "../src/index.ts";
 
 const fmt = getPrettyFormatter({ colorize: true });
 
@@ -41,15 +41,15 @@ process.stdout.write(
   fmt({
     category: ["my", "app"],
     level: "error",
-    message: ["Connection refused"],
-    rawMessage: "Connection refused",
+    message: ["Gateway Error"],
+    rawMessage: "Gateway Error",
     timestamp: now,
     properties: {
-      error: Object.assign(new Error("Connection refused"), {
+      error: Object.assign(new Error("Gateway Error"), {
         stack:
-          "Error: Connection refused\n    at connect (src/db.ts:42:11)\n    at main (src/index.ts:8:3)",
+          "Error: Gateway Error\n    at connect (src/db.ts:42:11)\n    at main (src/index.ts:8:3)",
       }),
-      response: { status: 500 },
+      response: { status: 502 },
     },
   }),
 );

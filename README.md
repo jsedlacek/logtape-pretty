@@ -11,7 +11,7 @@ Pretty formatter for [LogTape](https://logtape.org/). Produces clean, human-read
 ## Install
 
 ```sh
-pnpm add @jsedlacek/logtape-pretty
+npm install @jsedlacek/logtape-pretty
 ```
 
 ## Usage

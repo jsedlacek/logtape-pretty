@@ -2,10 +2,8 @@
 
 Pretty formatter for [LogTape](https://logtape.org/). Produces clean, human-readable log output with colors, timestamps, and structured properties.
 
-```
-[08:11:46] INFO (my.app): Missing legislation
-    identifier: "145/1988"
-```
+![Example output](assets/example-dark.svg#gh-dark-mode-only)
+![Example output](assets/example-light.svg#gh-light-mode-only)
 
 ## Install
 

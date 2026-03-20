@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="454" height="212" viewBox="0 0 454 212">
+  <rect width="454" height="212" rx="8" fill="#1c1c1c"/>
+  <text x="16" y="24" font-family="'SF Mono', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace" font-size="13">
+    <tspan fill="#cccccc">[08:11:46] </tspan>
+    <tspan fill="#00c200">INFO</tspan>
+    <tspan fill="#cccccc"> </tspan>
+    <tspan fill="#00c5c7">(my.app)</tspan>
+    <tspan fill="#cccccc">: </tspan>
+    <tspan fill="#00c5c7">Missing legislation</tspan>
+  </text>
+  <text x="16" y="44" font-family="'SF Mono', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace" font-size="13">
+    <tspan fill="#cccccc">    </tspan>
+    <tspan fill="#c930c7">identifier:</tspan>
+    <tspan fill="#cccccc"> &quot;145/1988&quot;</tspan>
+  </text>
+  <text x="16" y="64" font-family="'SF Mono', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace" font-size="13">
+    <tspan fill="#cccccc">[08:11:46] </tspan>
+    <tspan fill="#4f76ff">DEBUG</tspan>
+    <tspan fill="#cccccc"> </tspan>
+    <tspan fill="#00c5c7">(my.app.db)</tspan>
+    <tspan fill="#cccccc">: </tspan>
+    <tspan fill="#00c5c7">Query executed in 42ms</tspan>
+  </text>
+  <text x="16" y="84" font-family="'SF Mono', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace" font-size="13">
+    <tspan fill="#cccccc">    </tspan>
+    <tspan fill="#c930c7">query:</tspan>
+    <tspan fill="#cccccc"> &quot;SELECT * FROM laws&quot;</tspan>
+  </text>
+  <text x="16" y="104" font-family="'SF Mono', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace" font-size="13">
+    <tspan fill="#cccccc">    </tspan>
+    <tspan fill="#c930c7">rows:</tspan>
+    <tspan fill="#cccccc"> 15</tspan>
+  </text>
+  <text x="16" y="124" font-family="'SF Mono', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace" font-size="13">
+    <tspan fill="#cccccc">[08:11:46] </tspan>
+    <tspan fill="#c7c400">WARN</tspan>
+    <tspan fill="#cccccc"> </tspan>
+    <tspan fill="#00c5c7">(my.app)</tspan>
+    <tspan fill="#cccccc">: </tspan>
+    <tspan fill="#00c5c7">Deprecated API called</tspan>
+  </text>
+  <text x="16" y="144" font-family="'SF Mono', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace" font-size="13">
+    <tspan fill="#cccccc">    </tspan>
+    <tspan fill="#c930c7">path:</tspan>
+    <tspan fill="#cccccc"> &quot;/api/v1/old&quot;</tspan>
+  </text>
+  <text x="16" y="164" font-family="'SF Mono', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace" font-size="13">
+    <tspan fill="#cccccc">[08:11:46] </tspan>
+    <tspan fill="#ff3b30">ERROR</tspan>
+    <tspan fill="#cccccc"> </tspan>
+    <tspan fill="#00c5c7">(my.app)</tspan>
+    <tspan fill="#cccccc">: </tspan>
+    <tspan fill="#00c5c7">Failed to connect</tspan>
+  </text>
+  <rect x="101" y="171" width="43" height="17" rx="2" fill="#ff3b30"/>
+  <text x="16" y="184" font-family="'SF Mono', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace" font-size="13">
+    <tspan fill="#cccccc">[08:11:46] </tspan>
+    <tspan fill="#ffffff">FATAL</tspan>
+    <tspan fill="#cccccc"> </tspan>
+    <tspan fill="#00c5c7">(my.app)</tspan>
+    <tspan fill="#cccccc">: </tspan>
+    <tspan fill="#00c5c7">System shutting down</tspan>
+  </text>
+</svg>

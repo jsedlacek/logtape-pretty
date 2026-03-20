@@ -68,15 +68,7 @@ const LEVEL_COLOR_MAP: Record<LogLevel, ColorName> = {
 export function getLevelColorFn(
   level: LogLevel,
   colorize: Colorize,
-  customColors?: Partial<Record<LogLevel, string>>,
 ): ColorFn {
-  const colorName = customColors?.[level] ?? LEVEL_COLOR_MAP[level];
-  if (colorName && colorName in colorize) {
-    return colorize[colorName as ColorName];
-  }
-  return identity;
-}
-
-export function isColorName(name: string): name is ColorName {
-  return name in colors;
+  const colorName = LEVEL_COLOR_MAP[level];
+  return colorName ? colorize[colorName] : identity;
 }

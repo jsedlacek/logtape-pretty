@@ -31,8 +31,8 @@ describe("getLevelColorFn", () => {
     assert.equal(getLevelColorFn("fatal", c)("X"), c.bgRed("X"));
   });
 
-  it("uses custom colors when provided", () => {
-    const result = getLevelColorFn("info", c, { info: "cyan" })("X");
-    assert.equal(result, c.cyan("X"));
+  it("returns identity for unknown levels", () => {
+    const result = getLevelColorFn("unknown" as never, c)("X");
+    assert.equal(result, "X");
   });
 });

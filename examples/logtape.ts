@@ -4,7 +4,7 @@ import { getPrettyFormatter } from "../src/index.ts";
 await configure({
   sinks: {
     pretty: getConsoleSink({
-      formatter: getPrettyFormatter({ colorize: true }),
+      formatter: getPrettyFormatter({ color: true }),
     }),
   },
   loggers: [

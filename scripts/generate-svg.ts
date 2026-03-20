@@ -39,7 +39,20 @@ const records = [
     message: ["Failed to connect"],
     rawMessage: "Failed to connect",
     timestamp: now,
-    properties: {},
+    properties: {
+      error: Object.assign(Object.create(Error.prototype), {
+        name: "Error",
+        message: "Failed to connect",
+        stack:
+          "Error: Failed to connect\n    at connect (src/db.ts:42:11)\n    at main (src/index.ts:8:3)",
+        cause: Object.assign(Object.create(Error.prototype), {
+          name: "Error",
+          message: "Connection refused",
+          stack:
+            "Error: Connection refused\n    at Socket.connect (node:net:1187:16)",
+        }),
+      }),
+    },
   },
   {
     category: ["my", "app"],

@@ -53,6 +53,33 @@ function resolveTimestamp(
   return (epochMs: number) => fn(new Date(epochMs));
 }
 
+function formatError(err: Error, indent: string, depth: number): string {
+  if (depth > 4) return "[...]";
+  const childIndent = indent + "    ";
+  let out = "";
+  if (err.stack) {
+    const lines = err.stack.split("\n");
+    out += lines[0];
+    for (let i = 1; i < lines.length; i++) {
+      out += `\n${childIndent}${lines[i].trimStart()}`;
+    }
+  } else {
+    out += `${err.name}: ${err.message}`;
+  }
+  if (err.cause instanceof Error) {
+    out += `\n${childIndent}cause: ${formatError(err.cause, childIndent, depth + 1)}`;
+  } else if (err.cause !== undefined) {
+    out += `\n${childIndent}cause: ${formatValue(err.cause, childIndent, depth + 1)}`;
+  }
+  if ("errors" in err && Array.isArray((err as { errors: unknown[] }).errors)) {
+    const errors = (err as { errors: Error[] }).errors;
+    for (const e of errors) {
+      out += `\n${childIndent}${e instanceof Error ? formatError(e, childIndent, depth + 1) : formatValue(e, childIndent, depth + 1)}`;
+    }
+  }
+  return out;
+}
+
 function formatValue(
   value: unknown,
   indent: string,
@@ -73,6 +100,9 @@ function formatValue(
       (v) => `${innerIndent}${formatValue(v, innerIndent, depth + 1)}`,
     );
     return `[\n${items.join(",\n")}\n${indent}]`;
+  }
+  if (value instanceof Error) {
+    return formatError(value, indent, depth);
   }
   if (typeof value === "object") {
     if (

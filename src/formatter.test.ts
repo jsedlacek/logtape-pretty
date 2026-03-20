@@ -146,6 +146,34 @@ describe("getPrettyFormatter", () => {
     });
   });
 
+  describe("error formatting", () => {
+    const fmt = getPrettyFormatter({ color: false, timestamp: false });
+
+    it("formats Error with stack trace", () => {
+      const result = fmt(makeRecord({ properties: { error: new Error("Oops") } }));
+      assert.match(result, /error: Error: Oops/);
+      assert.match(result, /at /);
+    });
+
+    it("formats Error with cause", () => {
+      const err = new Error("Oops", { cause: new Error("root cause") });
+      const result = fmt(makeRecord({ properties: { error: err } }));
+      assert.match(result, /error: Error: Oops/);
+      assert.match(result, /cause: Error: root cause/);
+    });
+
+    it("formats AggregateError", () => {
+      const err = new AggregateError(
+        [new TypeError("bad type"), new RangeError("out of bounds")],
+        "Multiple failures",
+      );
+      const result = fmt(makeRecord({ properties: { error: err } }));
+      assert.match(result, /AggregateError: Multiple failures/);
+      assert.match(result, /TypeError: bad type/);
+      assert.match(result, /RangeError: out of bounds/);
+    });
+  });
+
   describe("color option", () => {
     it("produces ANSI codes when color is true", () => {
       const fmt = getPrettyFormatter({ color: true, timestamp: false });

@@ -41,18 +41,15 @@ process.stdout.write(
   fmt({
     category: ["my", "app"],
     level: "error",
-    message: ["Failed to connect"],
-    rawMessage: "Failed to connect",
+    message: ["Connection refused"],
+    rawMessage: "Connection refused",
     timestamp: now,
     properties: {
       error: Object.assign(new Error("Connection refused"), {
         stack:
           "Error: Connection refused\n    at connect (src/db.ts:42:11)\n    at main (src/index.ts:8:3)",
       }),
-      response: {
-        status: 503,
-        body: "Service Unavailable",
-      },
+      response: { status: 500 },
     },
   }),
 );

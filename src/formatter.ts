@@ -62,13 +62,6 @@ function formatValueCompact(value: unknown, depth: number = 0): string {
   return String(value);
 }
 
-function formatErrorStack(stack: string, indent: string): string {
-  return stack
-    .split("\n")
-    .map((line) => `${indent}${line}`)
-    .join("\n");
-}
-
 function formatMessage(record: LogRecord): string {
   return record.message.map(String).join("");
 }
@@ -161,16 +154,39 @@ export function getPrettyFormatter(
 
         if (errorKeys.has(key) && value != null && typeof value === "object") {
           const err = value as Record<string, unknown>;
-          if (err.message) {
-            line += singleLine ? " " : "\n";
-            line += `${singleLine ? "" : "    "}${colorize.red(`${key}.message: ${String(err.message)}`)}`;
+          const errEntries: [string, unknown][] = [];
+          // Error properties are non-enumerable, so extract them explicitly
+          if (value instanceof Error) {
+            if (err.name) errEntries.push(["name", err.name]);
+            if (err.message) errEntries.push(["message", err.message]);
+            if (err.stack) errEntries.push(["stack", err.stack]);
           }
-          if (err.stack && typeof err.stack === "string") {
-            line += singleLine ? " " : "\n";
-            const stackStr = singleLine
-              ? err.stack.replace(/\n/g, " ")
-              : formatErrorStack(err.stack, "    ");
-            line += colorize.red(singleLine ? `${key}.stack: ${stackStr}` : stackStr);
+          // Add any additional enumerable properties
+          for (const [k, v] of Object.entries(err)) {
+            if (!errEntries.some(([ek]) => ek === k)) {
+              errEntries.push([k, v]);
+            }
+          }
+          if (singleLine) {
+            const parts = errEntries.map(([k, v]) =>
+              typeof v === "string" && v.includes("\n")
+                ? `${k}: ${v.replace(/\n/g, " ")}`
+                : `${k}: ${String(v)}`
+            );
+            line += ` ${colorize.red(`(${key}: ${parts.join(", ")})`)}`;
+          } else {
+            line += `\n    ${colorize.magenta(`${key}:`)}`;
+            for (const [k, v] of errEntries) {
+              if (k === "stack" && typeof v === "string") {
+                const stackLines = v.split("\n").map((s) => s.replace(/^ +/, ""));
+                line += `\n        ${colorize.magenta(`${k}:`)} ${stackLines[0]}`;
+                for (let i = 1; i < stackLines.length; i++) {
+                  line += `\n            ${colorize.gray(stackLines[i])}`;
+                }
+              } else {
+                line += `\n        ${colorize.magenta(`${k}:`)} ${String(v)}`;
+              }
+            }
           }
         } else {
           if (singleLine) {

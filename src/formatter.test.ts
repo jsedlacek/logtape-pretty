@@ -219,18 +219,33 @@ describe("getPrettyFormatter", () => {
   describe("error formatting", () => {
     const fmt = getPrettyFormatter({ colorize: false, translateTime: false });
 
-    it("formats error-like objects with stack", () => {
+    it("formats error-like objects with nested properties", () => {
       const result = fmt(makeRecord({
         properties: {
           err: {
+            name: "TypeError",
             message: "Something went wrong",
             stack: "Error: Something went wrong\n    at foo (bar.js:1:1)",
           },
         },
       }));
-      assert.match(result, /err\.message: Something went wrong/);
-      assert.match(result, /Error: Something went wrong/);
+      assert.match(result, /err:\n/);
+      assert.match(result, /name: TypeError/);
+      assert.match(result, /message: Something went wrong/);
+      assert.match(result, /stack: Error: Something went wrong/);
       assert.match(result, /at foo/);
+    });
+
+    it("formats Error instances with non-enumerable properties", () => {
+      const result = fmt(makeRecord({
+        properties: {
+          error: new Error("Oops"),
+        },
+      }));
+      assert.match(result, /error:\n/);
+      assert.match(result, /name: Error/);
+      assert.match(result, /message: Oops/);
+      assert.match(result, /stack:/);
     });
   });
 

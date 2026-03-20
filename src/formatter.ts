@@ -124,7 +124,7 @@ export function getPrettyFormatter(
     // Category
     let category = "";
     if (record.category.length > 0) {
-      category = ` ${colorize.cyan(`(${record.category.join(".")})`)}`;
+      category = ` ${colorize.yellow(`(${record.category.join(".")})`)}`;
     }
 
     // Message

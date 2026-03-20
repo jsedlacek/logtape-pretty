@@ -1,0 +1,53 @@
+{
+  "name": "@jsedlacek/logtape-pretty",
+  "version": "0.1.0",
+  "description": "A pino-pretty style formatter for LogTape",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "node --experimental-strip-types --test src/**/*.test.ts",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "pnpm run build"
+  },
+  "keywords": [
+    "logtape",
+    "formatter",
+    "pretty",
+    "pino-pretty",
+    "logging"
+  ],
+  "license": "MIT",
+  "author": "Jakub Sedlacek",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jakubsedlacek/logtape-pretty"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}

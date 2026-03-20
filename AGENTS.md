@@ -25,4 +25,10 @@ pnpm run generate-svg # regenerate SVG screenshots
 
 ## Workflow
 
-After each change, run tests (`pnpm test`) and type-check (`pnpm run lint`). If both pass, commit the change before moving on.
+After each change:
+
+1. Run `pnpm test` and `pnpm run lint`
+2. If both pass, **commit immediately** without asking — do not wait for the user to say "commit"
+3. Then move on to the next change
+
+Each logical change should be its own commit. Do not batch multiple changes into one commit.

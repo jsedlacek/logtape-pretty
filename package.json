@@ -25,7 +25,10 @@
     "build": "tsup",
     "test": "node --experimental-strip-types --test src/**/*.test.ts",
     "lint": "tsc --noEmit",
-    "prepublishOnly": "pnpm run build"
+    "prepublishOnly": "pnpm run build",
+    "release": "node --experimental-strip-types scripts/release.ts",
+    "release:minor": "node --experimental-strip-types scripts/release.ts minor",
+    "release:major": "node --experimental-strip-types scripts/release.ts major"
   },
   "keywords": [
     "logtape",

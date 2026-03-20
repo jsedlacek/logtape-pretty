@@ -16,7 +16,7 @@ pnpm install          # install dependencies
 pnpm run build        # build with tsup
 pnpm test             # run tests
 pnpm run lint         # type-check with tsc
-pnpm run demo         # run demo script
+pnpm run demo         # run demo with logtape integration
 pnpm run release      # release patch version (bump, tag, push, GitHub release)
 pnpm run release:minor
 pnpm run release:major

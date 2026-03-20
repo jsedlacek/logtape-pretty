@@ -232,7 +232,7 @@ describe("getPrettyFormatter", () => {
   describe("error formatting", () => {
     const fmt = getPrettyFormatter({ colorize: false, translateTime: false });
 
-    it("formats error-like objects with nested properties", () => {
+    it("formats error-like objects compactly with stack", () => {
       const result = fmt(makeRecord({
         properties: {
           err: {
@@ -242,23 +242,20 @@ describe("getPrettyFormatter", () => {
           },
         },
       }));
-      assert.match(result, /err:\n/);
-      assert.match(result, /name: TypeError/);
-      assert.match(result, /message: Something went wrong/);
-      assert.match(result, /stack: Error: Something went wrong/);
+      assert.match(result, /err: Error: Something went wrong/);
       assert.match(result, /at foo/);
+      // name and message should NOT appear as separate entries
+      assert.doesNotMatch(result, /name: TypeError/);
+      assert.doesNotMatch(result, /message: Something went wrong\n/);
     });
 
-    it("formats Error instances with non-enumerable properties", () => {
+    it("formats Error instances compactly", () => {
       const result = fmt(makeRecord({
         properties: {
           error: new Error("Oops"),
         },
       }));
-      assert.match(result, /error:\n/);
-      assert.match(result, /name: Error/);
-      assert.match(result, /message: Oops/);
-      assert.match(result, /stack:/);
+      assert.match(result, /error: Error: Oops/);
     });
 
     it("formats Error with cause recursively", () => {
@@ -267,9 +264,8 @@ describe("getPrettyFormatter", () => {
           error: new Error("Oops", { cause: new Error("root cause") }),
         },
       }));
-      assert.match(result, /message: Oops/);
-      assert.match(result, /cause:\n/);
-      assert.match(result, /message: root cause/);
+      assert.match(result, /error: Error: Oops/);
+      assert.match(result, /cause: Error: root cause/);
     });
 
     it("formats nested plain objects inside errors", () => {
@@ -281,7 +277,7 @@ describe("getPrettyFormatter", () => {
           },
         },
       }));
-      assert.match(result, /message: Request failed/);
+      assert.match(result, /Request failed/);
       assert.match(result, /response: \{/);
       assert.match(result, /"status": 500/);
     });
@@ -295,14 +291,10 @@ describe("getPrettyFormatter", () => {
           ),
         },
       }));
-      assert.match(result, /message: Multiple failures/);
+      assert.match(result, /error: AggregateError: Multiple failures/);
       assert.match(result, /errors:/);
-      assert.match(result, /\[0\]:/);
-      assert.match(result, /name: TypeError/);
-      assert.match(result, /message: Invalid input/);
-      assert.match(result, /\[1\]:/);
-      assert.match(result, /name: RangeError/);
-      assert.match(result, /message: Out of bounds/);
+      assert.match(result, /TypeError: Invalid input/);
+      assert.match(result, /RangeError: Out of bounds/);
     });
 
     it("formats error-like objects with non-enumerable custom properties", () => {
@@ -312,7 +304,7 @@ describe("getPrettyFormatter", () => {
       const result = fmt(makeRecord({
         properties: { err },
       }));
-      assert.match(result, /message: File not found/);
+      assert.match(result, /File not found/);
       assert.match(result, /code: ENOENT/);
     });
   });

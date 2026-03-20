@@ -182,44 +182,89 @@ function isErrorLike(value: unknown): value is object {
   );
 }
 
-function formatErrorEntries(
-  entries: [string, unknown][],
+/**
+ * Format an error-like object compactly:
+ *   ErrorName: message
+ *       at file:///...
+ *       cause: Error: inner message
+ *           at file:///...
+ *       errors:
+ *           TypeError: ...
+ *       customProp: value
+ */
+function formatErrorCompact(
+  value: object,
   indent: string,
   ctx: FormatterContext,
 ): string {
-  let out = "";
+  const err = value as Record<string, unknown>;
+  const name = err.name != null ? String(err.name) : "";
+  const message = err.message != null ? String(err.message) : "";
+  const stack = typeof err.stack === "string" ? err.stack : "";
   const childIndent = indent + "    ";
-  for (const [k, v] of entries) {
-    if (k === "stack" && typeof v === "string") {
-      const stackLines = v.split("\n").map((s) => s.replace(/^ +/, ""));
-      out += `\n${indent}${ctx.colorize.magenta(`${k}:`)} ${stackLines[0]}`;
-      for (let i = 1; i < stackLines.length; i++) {
-        out += `\n${childIndent}${ctx.colorize.gray(stackLines[i])}`;
-      }
-    } else if (isErrorLike(v)) {
-      out += `\n${indent}${ctx.colorize.magenta(`${k}:`)}`;
-      out += formatErrorEntries(collectErrorEntries(v), indent + "    ", ctx);
+
+  let out = "";
+
+  // First line: "ErrorName: message" from stack, or synthesized
+  if (stack) {
+    const stackLines = stack.split("\n").map((s) => s.replace(/^ +/, ""));
+    out += ` ${stackLines[0]}`;
+    for (let i = 1; i < stackLines.length; i++) {
+      out += `\n${childIndent}${ctx.colorize.gray(stackLines[i])}`;
+    }
+  } else if (name && message) {
+    out += ` ${name}: ${message}`;
+  } else if (message) {
+    out += ` ${message}`;
+  } else if (name) {
+    out += ` ${name}`;
+  }
+
+  // Collect remaining properties (skip name, message, stack — already shown)
+  const skipKeys = new Set(["name", "message", "stack"]);
+  const extraEntries: [string, unknown][] = [];
+
+  // Prioritized keys first (cause, errors)
+  for (const k of ERROR_PRIORITY_KEYS) {
+    if (skipKeys.has(k)) continue;
+    if (err[k] !== undefined) {
+      extraEntries.push([k, err[k]]);
+      skipKeys.add(k);
+    }
+  }
+  // Then remaining own properties
+  for (const k of Object.getOwnPropertyNames(err)) {
+    if (!skipKeys.has(k)) {
+      extraEntries.push([k, err[k]]);
+    }
+  }
+
+  // Render extra properties
+  for (const [k, v] of extraEntries) {
+    if (isErrorLike(v)) {
+      out += `\n${childIndent}${ctx.colorize.magenta(`${k}:`)}`;
+      out += formatErrorCompact(v, childIndent, ctx);
     } else if (k === "errors" && Array.isArray(v)) {
-      out += `\n${indent}${ctx.colorize.magenta(`${k}:`)}`;
+      out += `\n${childIndent}${ctx.colorize.magenta(`${k}:`)}`;
+      const errIndent = childIndent + "    ";
       for (let i = 0; i < v.length; i++) {
         const item = v[i];
+        const separator = i < v.length - 1 ? "," : "";
         if (isErrorLike(item)) {
-          out += `\n${childIndent}${ctx.colorize.magenta(`[${i}]:`)}`;
-          out += formatErrorEntries(
-            collectErrorEntries(item),
-            childIndent + "    ",
-            ctx,
-          );
+          const compact = formatErrorCompact(item, errIndent, ctx);
+          // compact starts with " ErrorName: ...", put it on its own line
+          out += `\n${errIndent}${compact.trimStart()}${separator}`;
         } else {
-          out += `\n${childIndent}${ctx.colorize.magenta(`[${i}]:`)} ${String(item)}`;
+          out += `\n${errIndent}${String(item)}${separator}`;
         }
       }
     } else if (v != null && typeof v === "object") {
-      out += `\n${indent}${ctx.colorize.magenta(`${k}:`)} ${formatValue(v, indent, 0)}`;
+      out += `\n${childIndent}${ctx.colorize.magenta(`${k}:`)} ${formatValue(v, childIndent, 0)}`;
     } else {
-      out += `\n${indent}${ctx.colorize.magenta(`${k}:`)} ${String(v)}`;
+      out += `\n${childIndent}${ctx.colorize.magenta(`${k}:`)} ${String(v)}`;
     }
   }
+
   return out;
 }
 
@@ -228,8 +273,8 @@ function formatErrorProperty(
   value: object,
   ctx: FormatterContext,
 ): string {
-  const errEntries = collectErrorEntries(value);
   if (ctx.singleLine) {
+    const errEntries = collectErrorEntries(value);
     const parts = errEntries.map(([k, v]) =>
       typeof v === "string" && v.includes("\n")
         ? `${k}: ${v.replace(/\n/g, " ")}`
@@ -238,7 +283,7 @@ function formatErrorProperty(
     return ` ${ctx.colorize.red(`(${key}: ${parts.join(", ")})`)}`;
   }
   let out = `\n    ${ctx.colorize.magenta(`${key}:`)}`;
-  out += formatErrorEntries(errEntries, "        ", ctx);
+  out += formatErrorCompact(value, "    ", ctx);
   return out;
 }
 
@@ -285,13 +330,6 @@ export function getPrettyFormatter(
   };
 
   return (record: LogRecord): string => {
-    console.log(
-      "record",
-      Object.entries(record.properties).map(([k, v]) => ({
-        [k]: [typeof v, v instanceof Error],
-      })),
-    );
-
     const timestamp = formatTimestamp(record, ctx);
     const level = formatLevel(record, ctx);
     const category = formatCategory(record, ctx);

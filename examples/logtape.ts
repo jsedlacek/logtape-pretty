@@ -1,15 +1,10 @@
-import {
-  configure,
-  getConsoleSink,
-  getJsonLinesFormatter,
-  getLogger,
-} from "@logtape/logtape";
+import { configure, getConsoleSink, getLogger } from "@logtape/logtape";
 import { getPrettyFormatter } from "../src/index.ts";
 
 await configure({
   sinks: {
     pretty: getConsoleSink({
-      formatter: getJsonLinesFormatter(),
+      formatter: getPrettyFormatter({ colorize: true }),
     }),
   },
   loggers: [

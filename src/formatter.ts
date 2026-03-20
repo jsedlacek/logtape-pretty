@@ -1,6 +1,19 @@
-import { createColorize, detectColorSupport, getLevelColorFn } from "./colors.ts";
+import { type Colorize, createColorize, detectColorSupport, getLevelColorFn } from "./colors.ts";
 import { formatTime } from "./time.ts";
 import type { LogLevel, LogRecord, PrettyFormatterOptions, TextFormatter } from "./types.ts";
+
+interface FormatterContext {
+  readonly colorize: Colorize;
+  readonly customColors: PrettyFormatterOptions["customColors"];
+  readonly translateTime: string | false;
+  readonly levelFirst: boolean;
+  readonly singleLine: boolean;
+  readonly hideObject: boolean;
+  readonly messageFormat: PrettyFormatterOptions["messageFormat"];
+  readonly ignoreSet: Set<string> | null;
+  readonly includeSet: Set<string> | null;
+  readonly errorKeys: Set<string>;
+}
 
 const LEVEL_LABELS: Record<LogLevel, string> = {
   trace: "TRACE",
@@ -89,112 +102,115 @@ function applyMessageFormat(
   });
 }
 
+function formatTimestamp(record: LogRecord, ctx: FormatterContext): string {
+  if (ctx.translateTime === false) return "";
+  return `[${formatTime(record.timestamp, ctx.translateTime)}]`;
+}
+
+function formatLevel(record: LogRecord, ctx: FormatterContext): string {
+  const label = LEVEL_LABELS[record.level] ?? record.level.toUpperCase();
+  const colorFn = getLevelColorFn(record.level, ctx.colorize, ctx.customColors);
+  return colorFn(label);
+}
+
+function formatCategory(record: LogRecord, ctx: FormatterContext): string {
+  if (record.category.length === 0) return "";
+  return ` ${ctx.colorize.gray(`(${record.category.join(".")})`)}`;
+}
+
+function formatMsg(record: LogRecord, ctx: FormatterContext): string {
+  if (!ctx.messageFormat) return formatMessage(record);
+  if (typeof ctx.messageFormat === "function") return ctx.messageFormat(record);
+  return applyMessageFormat(ctx.messageFormat, record);
+}
+
+function assembleLine(
+  timestamp: string,
+  level: string,
+  category: string,
+  msg: string,
+  ctx: FormatterContext,
+): string {
+  const coloredMsg = ctx.colorize.cyan(msg);
+  if (ctx.levelFirst) {
+    return timestamp
+      ? `${level} ${timestamp}${category}: ${coloredMsg}`
+      : `${level}${category}: ${coloredMsg}`;
+  }
+  return timestamp
+    ? `${timestamp} ${level}${category}: ${coloredMsg}`
+    : `${level}${category}: ${coloredMsg}`;
+}
+
+function formatErrorProperty(key: string, value: object, ctx: FormatterContext): string {
+  const errEntries = collectErrorEntries(value);
+  if (ctx.singleLine) {
+    const parts = errEntries.map(([k, v]) =>
+      typeof v === "string" && v.includes("\n")
+        ? `${k}: ${v.replace(/\n/g, " ")}`
+        : `${k}: ${String(v)}`
+    );
+    return ` ${ctx.colorize.red(`(${key}: ${parts.join(", ")})`)}`;
+  }
+  let out = `\n    ${ctx.colorize.magenta(`${key}:`)}`;
+  for (const [k, v] of errEntries) {
+    if (k === "stack" && typeof v === "string") {
+      const stackLines = v.split("\n").map((s) => s.replace(/^ +/, ""));
+      out += `\n        ${ctx.colorize.magenta(`${k}:`)} ${stackLines[0]}`;
+      for (let i = 1; i < stackLines.length; i++) {
+        out += `\n            ${ctx.colorize.gray(stackLines[i])}`;
+      }
+    } else {
+      out += `\n        ${ctx.colorize.magenta(`${k}:`)} ${String(v)}`;
+    }
+  }
+  return out;
+}
+
+function formatRegularProperty(key: string, value: unknown, ctx: FormatterContext): string {
+  if (ctx.singleLine) {
+    return ` ${ctx.colorize.gray(`(${key}: ${formatValue(value, null)})`)}`;
+  }
+  return `\n    ${ctx.colorize.magenta(`${key}:`)} ${formatValue(value, "    ", 0)}`;
+}
+
+function formatProperties(record: LogRecord, ctx: FormatterContext): string {
+  if (ctx.hideObject) return "";
+  let result = "";
+  for (const [key, value] of Object.entries(record.properties)) {
+    if (ctx.ignoreSet?.has(key)) continue;
+    if (ctx.includeSet && !ctx.includeSet.has(key)) continue;
+    if (ctx.errorKeys.has(key) && value != null && typeof value === "object") {
+      result += formatErrorProperty(key, value, ctx);
+    } else {
+      result += formatRegularProperty(key, value, ctx);
+    }
+  }
+  return result;
+}
+
 export function getPrettyFormatter(
   options: PrettyFormatterOptions = {},
 ): TextFormatter {
-  const {
-    levelFirst = false,
-    singleLine = false,
-    hideObject = false,
-    translateTime = "HH:MM:ss",
-    errorLikeObjectKeys = ["err", "error"],
-    messageFormat,
-    customColors,
-  } = options;
-
-  const colorEnabled = options.colorize ?? detectColorSupport();
-  const colorize = createColorize(colorEnabled);
-
-  const ignoreSet = parseKeySet(options.ignore);
-  const includeSet = parseKeySet(options.include);
-  const errorKeys = new Set(errorLikeObjectKeys);
+  const ctx: FormatterContext = {
+    colorize: createColorize(options.colorize ?? detectColorSupport()),
+    customColors: options.customColors,
+    translateTime: options.translateTime ?? "HH:MM:ss",
+    levelFirst: options.levelFirst ?? false,
+    singleLine: options.singleLine ?? false,
+    hideObject: options.hideObject ?? false,
+    messageFormat: options.messageFormat,
+    ignoreSet: parseKeySet(options.ignore),
+    includeSet: parseKeySet(options.include),
+    errorKeys: new Set(options.errorLikeObjectKeys ?? ["err", "error"]),
+  };
 
   return (record: LogRecord): string => {
-    // Timestamp
-    let timestamp = "";
-    if (translateTime !== false) {
-      const timeStr = formatTime(record.timestamp, translateTime);
-      timestamp = `[${timeStr}]`;
-    }
-
-    // Level
-    const levelLabel = LEVEL_LABELS[record.level] ?? record.level.toUpperCase();
-    const levelColorFn = getLevelColorFn(record.level, colorize, customColors);
-    const level = levelColorFn(levelLabel);
-
-    // Category
-    let category = "";
-    if (record.category.length > 0) {
-      category = ` ${colorize.gray(`(${record.category.join(".")})`)}`;
-    }
-
-    // Message
-    let msg: string;
-    if (messageFormat) {
-      if (typeof messageFormat === "function") {
-        msg = messageFormat(record);
-      } else {
-        msg = applyMessageFormat(messageFormat, record);
-      }
-    } else {
-      msg = formatMessage(record);
-    }
-
-    // Assemble main line
-    let line: string;
-    if (levelFirst) {
-      line = timestamp
-        ? `${level} ${timestamp}${category}: ${colorize.cyan(msg)}`
-        : `${level}${category}: ${colorize.cyan(msg)}`;
-    } else {
-      line = timestamp
-        ? `${timestamp} ${level}${category}: ${colorize.cyan(msg)}`
-        : `${level}${category}: ${colorize.cyan(msg)}`;
-    }
-
-    // Properties
-    if (!hideObject) {
-      const propEntries = Object.entries(record.properties);
-
-      for (const [key, value] of propEntries) {
-        if (ignoreSet?.has(key)) continue;
-        if (includeSet && !includeSet.has(key)) continue;
-
-        if (errorKeys.has(key) && value != null && typeof value === "object") {
-          const errEntries = collectErrorEntries(value);
-          if (singleLine) {
-            const parts = errEntries.map(([k, v]) =>
-              typeof v === "string" && v.includes("\n")
-                ? `${k}: ${v.replace(/\n/g, " ")}`
-                : `${k}: ${String(v)}`
-            );
-            line += ` ${colorize.red(`(${key}: ${parts.join(", ")})`)}`;
-          } else {
-            line += `\n    ${colorize.magenta(`${key}:`)}`;
-            for (const [k, v] of errEntries) {
-              if (k === "stack" && typeof v === "string") {
-                const stackLines = v.split("\n").map((s) => s.replace(/^ +/, ""));
-                line += `\n        ${colorize.magenta(`${k}:`)} ${stackLines[0]}`;
-                for (let i = 1; i < stackLines.length; i++) {
-                  line += `\n            ${colorize.gray(stackLines[i])}`;
-                }
-              } else {
-                line += `\n        ${colorize.magenta(`${k}:`)} ${String(v)}`;
-              }
-            }
-          }
-        } else {
-          if (singleLine) {
-            const formatted = formatValue(value, null);
-            line += ` ${colorize.gray(`(${key}: ${formatted})`)}`;
-          } else {
-            const formatted = formatValue(value, "    ", 0);
-            line += `\n    ${colorize.magenta(`${key}:`)} ${formatted}`;
-          }
-        }
-      }
-    }
-
-    return line + "\n";
+    const timestamp = formatTimestamp(record, ctx);
+    const level = formatLevel(record, ctx);
+    const category = formatCategory(record, ctx);
+    const msg = formatMsg(record, ctx);
+    const line = assembleLine(timestamp, level, category, msg, ctx);
+    return line + formatProperties(record, ctx) + "\n";
   };
 }

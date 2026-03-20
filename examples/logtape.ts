@@ -18,7 +18,9 @@ const logger = getLogger(["my", "app"]);
 logger.info("Server started on port {port}", { port: 3000 });
 logger.debug("Loading config from {path}", { path: "/etc/app/config.json" });
 logger.warn("Deprecated API called", { endpoint: "/api/v1/old" });
-logger.error("Request failed", {
-  error: new Error("Connection refused"),
-  url: "https://api.example.com/data",
-});
+logger.error(new Error("Simple Error"));
+logger.error(
+  new Error("API Error", {
+    cause: new Error("Http Error"),
+  }),
+);

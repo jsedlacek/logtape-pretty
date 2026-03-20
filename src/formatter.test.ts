@@ -247,6 +247,42 @@ describe("getPrettyFormatter", () => {
       assert.match(result, /message: Oops/);
       assert.match(result, /stack:/);
     });
+
+    it("formats Error with cause recursively", () => {
+      const result = fmt(makeRecord({
+        properties: {
+          error: new Error("Oops", { cause: new Error("root cause") }),
+        },
+      }));
+      assert.match(result, /message: Oops/);
+      assert.match(result, /cause:\n/);
+      assert.match(result, /message: root cause/);
+    });
+
+    it("formats nested plain objects inside errors", () => {
+      const result = fmt(makeRecord({
+        properties: {
+          err: {
+            message: "Request failed",
+            response: { status: 500, body: "Internal Server Error" },
+          },
+        },
+      }));
+      assert.match(result, /message: Request failed/);
+      assert.match(result, /response: \{/);
+      assert.match(result, /"status": 500/);
+    });
+
+    it("formats error-like objects with non-enumerable custom properties", () => {
+      const err = Object.create(null);
+      Object.defineProperty(err, "code", { value: "ENOENT", enumerable: false });
+      err.message = "File not found";
+      const result = fmt(makeRecord({
+        properties: { err },
+      }));
+      assert.match(result, /message: File not found/);
+      assert.match(result, /code: ENOENT/);
+    });
   });
 
   describe("colors", () => {

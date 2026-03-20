@@ -61,23 +61,23 @@ function formatValue(value: unknown, indent: string | null, depth: number = 0): 
   return String(value);
 }
 
+const ERROR_PRIORITY_KEYS = ["name", "message", "stack", "cause"];
+
 function collectErrorEntries(value: object): [string, unknown][] {
   const err = value as Record<string, unknown>;
   const seen = new Set<string>();
   const entries: [string, unknown][] = [];
-  // Error properties are non-enumerable, so extract them explicitly
-  if (value instanceof Error) {
-    for (const k of ["name", "message", "stack"] as const) {
-      if (err[k]) {
-        entries.push([k, err[k]]);
-        seen.add(k);
-      }
+  // Show well-known error properties first in a predictable order
+  for (const k of ERROR_PRIORITY_KEYS) {
+    if (err[k] !== undefined) {
+      entries.push([k, err[k]]);
+      seen.add(k);
     }
   }
-  // Add any additional enumerable properties
-  for (const [k, v] of Object.entries(err)) {
+  // Add any remaining own properties (including non-enumerable ones)
+  for (const k of Object.getOwnPropertyNames(err)) {
     if (!seen.has(k)) {
-      entries.push([k, v]);
+      entries.push([k, err[k]]);
     }
   }
   return entries;
@@ -142,6 +142,36 @@ function assembleLine(
     : `${level}${category}: ${coloredMsg}`;
 }
 
+function isErrorLike(value: unknown): value is object {
+  return value != null && typeof value === "object" && ("message" in value || "stack" in value || value instanceof Error);
+}
+
+function formatErrorEntries(
+  entries: [string, unknown][],
+  indent: string,
+  ctx: FormatterContext,
+): string {
+  let out = "";
+  const childIndent = indent + "    ";
+  for (const [k, v] of entries) {
+    if (k === "stack" && typeof v === "string") {
+      const stackLines = v.split("\n").map((s) => s.replace(/^ +/, ""));
+      out += `\n${indent}${ctx.colorize.magenta(`${k}:`)} ${stackLines[0]}`;
+      for (let i = 1; i < stackLines.length; i++) {
+        out += `\n${childIndent}${ctx.colorize.gray(stackLines[i])}`;
+      }
+    } else if (isErrorLike(v)) {
+      out += `\n${indent}${ctx.colorize.magenta(`${k}:`)}`;
+      out += formatErrorEntries(collectErrorEntries(v), indent + "    ", ctx);
+    } else if (v != null && typeof v === "object") {
+      out += `\n${indent}${ctx.colorize.magenta(`${k}:`)} ${formatValue(v, indent, 0)}`;
+    } else {
+      out += `\n${indent}${ctx.colorize.magenta(`${k}:`)} ${String(v)}`;
+    }
+  }
+  return out;
+}
+
 function formatErrorProperty(key: string, value: object, ctx: FormatterContext): string {
   const errEntries = collectErrorEntries(value);
   if (ctx.singleLine) {
@@ -153,17 +183,7 @@ function formatErrorProperty(key: string, value: object, ctx: FormatterContext):
     return ` ${ctx.colorize.red(`(${key}: ${parts.join(", ")})`)}`;
   }
   let out = `\n    ${ctx.colorize.magenta(`${key}:`)}`;
-  for (const [k, v] of errEntries) {
-    if (k === "stack" && typeof v === "string") {
-      const stackLines = v.split("\n").map((s) => s.replace(/^ +/, ""));
-      out += `\n        ${ctx.colorize.magenta(`${k}:`)} ${stackLines[0]}`;
-      for (let i = 1; i < stackLines.length; i++) {
-        out += `\n            ${ctx.colorize.gray(stackLines[i])}`;
-      }
-    } else {
-      out += `\n        ${ctx.colorize.magenta(`${k}:`)} ${String(v)}`;
-    }
-  }
+  out += formatErrorEntries(errEntries, "        ", ctx);
   return out;
 }
 

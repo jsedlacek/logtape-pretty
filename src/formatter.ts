@@ -18,7 +18,7 @@ function parseKeySet(input: string | Set<string> | undefined): Set<string> | nul
   return keys.length > 0 ? new Set(keys) : null;
 }
 
-function formatValue(value: unknown, indent: string, depth: number = 0): string {
+function formatValue(value: unknown, indent: string | null, depth: number = 0): string {
   if (depth > 4) return "[...]";
   if (value === null) return "null";
   if (value === undefined) return "undefined";
@@ -28,6 +28,9 @@ function formatValue(value: unknown, indent: string, depth: number = 0): string 
   if (value instanceof Date) return value.toISOString();
   if (Array.isArray(value)) {
     if (value.length === 0) return "[]";
+    if (indent === null) {
+      return `[${value.map((v) => formatValue(v, null, depth + 1)).join(", ")}]`;
+    }
     const innerIndent = indent + "  ";
     const items = value.map((v) => `${innerIndent}${formatValue(v, innerIndent, depth + 1)}`);
     return `[\n${items.join(",\n")}\n${indent}]`;
@@ -35,29 +38,12 @@ function formatValue(value: unknown, indent: string, depth: number = 0): string 
   if (typeof value === "object") {
     const entries = Object.entries(value as Record<string, unknown>);
     if (entries.length === 0) return "{}";
+    if (indent === null) {
+      return `{${entries.map(([k, v]) => `"${k}": ${formatValue(v, null, depth + 1)}`).join(", ")}}`;
+    }
     const innerIndent = indent + "  ";
     const items = entries.map(([k, v]) => `${innerIndent}"${k}": ${formatValue(v, innerIndent, depth + 1)}`);
     return `{\n${items.join(",\n")}\n${indent}}`;
-  }
-  return String(value);
-}
-
-function formatValueCompact(value: unknown, depth: number = 0): string {
-  if (depth > 4) return "[...]";
-  if (value === null) return "null";
-  if (value === undefined) return "undefined";
-  if (typeof value === "string") return `"${value}"`;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
-  if (typeof value === "bigint") return `${value}n`;
-  if (value instanceof Date) return value.toISOString();
-  if (Array.isArray(value)) {
-    if (value.length === 0) return "[]";
-    return `[${value.map((v) => formatValueCompact(v, depth + 1)).join(", ")}]`;
-  }
-  if (typeof value === "object") {
-    const entries = Object.entries(value as Record<string, unknown>);
-    if (entries.length === 0) return "{}";
-    return `{${entries.map(([k, v]) => `"${k}": ${formatValueCompact(v, depth + 1)}`).join(", ")}}`;
   }
   return String(value);
 }
@@ -190,7 +176,7 @@ export function getPrettyFormatter(
           }
         } else {
           if (singleLine) {
-            const formatted = formatValueCompact(value);
+            const formatted = formatValue(value, null);
             line += ` ${colorize.gray(`(${key}: ${formatted})`)}`;
           } else {
             const formatted = formatValue(value, "    ", 0);

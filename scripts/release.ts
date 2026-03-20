@@ -14,6 +14,16 @@ function run(cmd: string): string {
   return execSync(cmd, { encoding: "utf-8" }).trim();
 }
 
+// Regenerate SVG screenshots
+console.log("Regenerating SVG screenshots...");
+run("pnpm run generate-svg");
+const svgStatus = run("git status --porcelain assets/");
+if (svgStatus) {
+  run("git add assets/");
+  run('git commit -m "Regenerate SVG screenshots"');
+  console.log("SVG screenshots updated.");
+}
+
 // Ensure working directory is clean
 const status = run("git status --porcelain");
 if (status) {

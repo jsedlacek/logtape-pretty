@@ -91,7 +91,7 @@ export function getPrettyFormatter(
     let timestamp = "";
     if (translateTime !== false) {
       const timeStr = formatTime(record.timestamp, translateTime);
-      timestamp = colorize.gray(`[${timeStr}]`);
+      timestamp = `[${timeStr}]`;
     }
 
     // Level
@@ -121,12 +121,12 @@ export function getPrettyFormatter(
     let line: string;
     if (levelFirst) {
       line = timestamp
-        ? `${level} ${timestamp}${category}: ${msg}`
-        : `${level}${category}: ${msg}`;
+        ? `${level} ${timestamp}${category}: ${colorize.cyan(msg)}`
+        : `${level}${category}: ${colorize.cyan(msg)}`;
     } else {
       line = timestamp
-        ? `${timestamp} ${level}${category}: ${msg}`
-        : `${level}${category}: ${msg}`;
+        ? `${timestamp} ${level}${category}: ${colorize.cyan(msg)}`
+        : `${level}${category}: ${colorize.cyan(msg)}`;
     }
 
     // Properties
@@ -155,7 +155,7 @@ export function getPrettyFormatter(
           if (singleLine) {
             line += ` ${colorize.gray(`(${key}: ${formatted})`)}`;
           } else {
-            line += `\n    ${key}: ${colorize.gray(formatted)}`;
+            line += `\n    ${colorize.magenta(`${key}:`)} ${formatted}`;
           }
         }
       }

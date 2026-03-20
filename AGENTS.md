@@ -22,3 +22,7 @@ pnpm run release:minor
 pnpm run release:major
 pnpm run generate-svg # regenerate SVG screenshots
 ```
+
+## Workflow
+
+After each change, run tests (`pnpm test`) and type-check (`pnpm run lint`). If both pass, commit the change before moving on.

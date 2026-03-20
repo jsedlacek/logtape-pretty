@@ -53,7 +53,7 @@ function resolveTimestamp(
   return (epochMs: number) => fn(new Date(epochMs));
 }
 
-function formatError(err: Error, indent: string, depth: number): string {
+function formatError(err: Error, indent: string, depth: number, colorize: Colorize): string {
   if (depth > 4) return "[...]";
   const childIndent = indent + "    ";
   let out = "";
@@ -61,20 +61,20 @@ function formatError(err: Error, indent: string, depth: number): string {
     const lines = err.stack.split("\n");
     out += lines[0];
     for (let i = 1; i < lines.length; i++) {
-      out += `\n${childIndent}${lines[i].trimStart()}`;
+      out += `\n${childIndent}${colorize.gray(lines[i].trimStart())}`;
     }
   } else {
     out += `${err.name}: ${err.message}`;
   }
   if (err.cause instanceof Error) {
-    out += `\n${childIndent}cause: ${formatError(err.cause, childIndent, depth + 1)}`;
+    out += `\n${childIndent}${colorize.magenta("cause:")} ${formatError(err.cause, childIndent, depth + 1, colorize)}`;
   } else if (err.cause !== undefined) {
-    out += `\n${childIndent}cause: ${formatValue(err.cause, childIndent, depth + 1)}`;
+    out += `\n${childIndent}${colorize.magenta("cause:")} ${formatValue(err.cause, childIndent, depth + 1)}`;
   }
   if ("errors" in err && Array.isArray((err as { errors: unknown[] }).errors)) {
     const errors = (err as { errors: Error[] }).errors;
     for (const e of errors) {
-      out += `\n${childIndent}${e instanceof Error ? formatError(e, childIndent, depth + 1) : formatValue(e, childIndent, depth + 1)}`;
+      out += `\n${childIndent}${e instanceof Error ? formatError(e, childIndent, depth + 1, colorize) : formatValue(e, childIndent, depth + 1)}`;
     }
   }
   return out;
@@ -100,9 +100,6 @@ function formatValue(
       (v) => `${innerIndent}${formatValue(v, innerIndent, depth + 1)}`,
     );
     return `[\n${items.join(",\n")}\n${indent}]`;
-  }
-  if (value instanceof Error) {
-    return formatError(value, indent, depth);
   }
   if (typeof value === "object") {
     if (
@@ -150,7 +147,11 @@ function formatCategory(record: LogRecord, ctx: FormatterContext): string {
 function formatProperties(record: LogRecord, ctx: FormatterContext): string {
   let result = "";
   for (const [key, value] of Object.entries(record.properties)) {
-    result += `\n    ${ctx.colorize.magenta(`${key}:`)} ${formatValue(value, "    ", 0)}`;
+    if (value instanceof Error) {
+      result += `\n    ${ctx.colorize.magenta(`${key}:`)} ${formatError(value, "    ", 0, ctx.colorize)}`;
+    } else {
+      result += `\n    ${ctx.colorize.magenta(`${key}:`)} ${formatValue(value, "    ", 0)}`;
+    }
   }
   return result;
 }

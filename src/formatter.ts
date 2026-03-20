@@ -49,6 +49,9 @@ function formatValue(value: unknown, indent: string | null, depth: number = 0): 
     return `[\n${items.join(",\n")}\n${indent}]`;
   }
   if (typeof value === "object") {
+    if ("toJSON" in value && typeof (value as Record<string, unknown>).toJSON === "function") {
+      return formatValue((value as { toJSON(): unknown }).toJSON(), indent, depth);
+    }
     const entries = Object.entries(value as Record<string, unknown>);
     if (entries.length === 0) return "{}";
     if (indent === null) {

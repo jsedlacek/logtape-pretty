@@ -214,6 +214,19 @@ describe("getPrettyFormatter", () => {
       const result = fmt(makeRecord({ properties: { user: { name: "alice" } } }));
       assert.match(result, /user: \{\n\s+"name": "alice"\n\s+\}/);
     });
+
+    it("formats objects with toJSON()", () => {
+      const obj = { toJSON: () => ({ status: 200, url: "https://example.com" }) };
+      const result = fmt(makeRecord({ properties: { response: obj } }));
+      assert.match(result, /"status": 200/);
+      assert.match(result, /"url": "https:\/\/example.com"/);
+    });
+
+    it("formats objects with toJSON() returning a primitive", () => {
+      const obj = { toJSON: () => "custom-value" };
+      const result = fmt(makeRecord({ properties: { token: obj } }));
+      assert.match(result, /token: "custom-value"/);
+    });
   });
 
   describe("error formatting", () => {

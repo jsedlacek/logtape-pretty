@@ -15,9 +15,13 @@ function makeRecord(overrides: Partial<LogRecord> = {}): LogRecord {
   };
 }
 
+/** Fixed UTC formatter for deterministic tests. */
+const utcTime = (d: Date) =>
+  `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}:${String(d.getUTCSeconds()).padStart(2, "0")}`;
+
 describe("getPrettyFormatter", () => {
   describe("basic output", () => {
-    const fmt = getPrettyFormatter({ color: false, timestamp: "UTC:HH:MM:ss" });
+    const fmt = getPrettyFormatter({ color: false, timestamp: utcTime });
 
     it("formats a simple log record", () => {
       const result = fmt(makeRecord());
@@ -60,31 +64,37 @@ describe("getPrettyFormatter", () => {
       assert.equal(result, "INFO: Hello, world!\n");
     });
 
-    it("timestamp: 'time' shows HH:MM:ss", () => {
-      const fmt = getPrettyFormatter({ color: false, timestamp: "UTC:time" });
+    it("timestamp: 'time' shows HH:MM:ss (local)", () => {
+      const fmt = getPrettyFormatter({ color: false, timestamp: "time" });
       const result = fmt(makeRecord());
-      assert.equal(result, "[08:11:46] INFO: Hello, world!\n");
+      assert.match(result, /^\[\d{2}:\d{2}:\d{2}\] INFO: Hello, world!\n$/);
     });
 
-    it("timestamp: 'datetime' shows yyyy-mm-dd HH:MM:ss", () => {
-      const fmt = getPrettyFormatter({ color: false, timestamp: "UTC:datetime" });
+    it("timestamp: 'datetime' shows yyyy-mm-dd HH:MM:ss (local)", () => {
+      const fmt = getPrettyFormatter({ color: false, timestamp: "datetime" });
       const result = fmt(makeRecord());
-      assert.equal(result, "[2024-03-15 08:11:46] INFO: Hello, world!\n");
+      assert.match(result, /^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\] INFO:/);
     });
 
-    it("timestamp: 'date' shows yyyy-mm-dd", () => {
-      const fmt = getPrettyFormatter({ color: false, timestamp: "UTC:date" });
+    it("timestamp: 'date' shows yyyy-mm-dd (local)", () => {
+      const fmt = getPrettyFormatter({ color: false, timestamp: "date" });
       const result = fmt(makeRecord());
-      assert.equal(result, "[2024-03-15] INFO: Hello, world!\n");
+      assert.match(result, /^\[\d{4}-\d{2}-\d{2}\] INFO:/);
     });
 
-    it("custom format string", () => {
+    it("custom function", () => {
       const fmt = getPrettyFormatter({
         color: false,
-        timestamp: "UTC:yyyy-mm-dd HH:MM:ss",
+        timestamp: (d) => d.toISOString(),
       });
       const result = fmt(makeRecord());
-      assert.equal(result, "[2024-03-15 08:11:46] INFO: Hello, world!\n");
+      assert.equal(result, "[2024-03-15T08:11:46.123Z] INFO: Hello, world!\n");
+    });
+
+    it("defaults to 'time' when omitted", () => {
+      const fmt = getPrettyFormatter({ color: false });
+      const result = fmt(makeRecord());
+      assert.match(result, /^\[\d{2}:\d{2}:\d{2}\] INFO:/);
     });
   });
 

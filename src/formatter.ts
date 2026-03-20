@@ -4,7 +4,6 @@ import {
   detectColorSupport,
   getLevelColorFn,
 } from "./colors.ts";
-import { formatTime } from "./time.ts";
 import type {
   LogLevel,
   LogRecord,
@@ -14,7 +13,7 @@ import type {
 
 interface FormatterContext {
   readonly colorize: Colorize;
-  readonly timestampFormat: string | false;
+  readonly formatTimestamp: ((epochMs: number) => string) | false;
 }
 
 const LEVEL_LABELS: Record<LogLevel, string> = {
@@ -26,21 +25,32 @@ const LEVEL_LABELS: Record<LogLevel, string> = {
   fatal: "FATAL",
 };
 
-const TIMESTAMP_PRESETS: Record<string, string> = {
-  time: "HH:MM:ss",
-  datetime: "yyyy-mm-dd HH:MM:ss",
-  date: "yyyy-mm-dd",
+const pad2 = (n: number): string => String(n).padStart(2, "0");
+
+function timePreset(date: Date): string {
+  return `${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`;
+}
+
+function datetimePreset(date: Date): string {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`;
+}
+
+function datePreset(date: Date): string {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+}
+
+const TIMESTAMP_PRESETS: Record<string, (date: Date) => string> = {
+  time: timePreset,
+  datetime: datetimePreset,
+  date: datePreset,
 };
 
 function resolveTimestamp(
   value: PrettyFormatterOptions["timestamp"],
-): string | false {
+): ((epochMs: number) => string) | false {
   if (value === false) return false;
-  if (value === undefined) return TIMESTAMP_PRESETS.time;
-  const utcPrefix = value.startsWith("UTC:") ? "UTC:" : "";
-  const name = utcPrefix ? value.slice(4) : value;
-  const resolved = TIMESTAMP_PRESETS[name] ?? name;
-  return utcPrefix + resolved;
+  const fn = typeof value === "function" ? value : TIMESTAMP_PRESETS[value ?? "time"];
+  return (epochMs: number) => fn(new Date(epochMs));
 }
 
 function formatValue(
@@ -92,8 +102,8 @@ function formatMessage(record: LogRecord): string {
 }
 
 function formatTimestamp(record: LogRecord, ctx: FormatterContext): string {
-  if (ctx.timestampFormat === false) return "";
-  return `[${formatTime(record.timestamp, ctx.timestampFormat)}]`;
+  if (ctx.formatTimestamp === false) return "";
+  return `[${ctx.formatTimestamp(record.timestamp)}]`;
 }
 
 function formatLevel(record: LogRecord, ctx: FormatterContext): string {
@@ -120,7 +130,7 @@ export function getPrettyFormatter(
 ): TextFormatter {
   const ctx: FormatterContext = {
     colorize: createColorize(options.color ?? detectColorSupport()),
-    timestampFormat: resolveTimestamp(options.timestamp),
+    formatTimestamp: resolveTimestamp(options.timestamp),
   };
 
   return (record: LogRecord): string => {

@@ -1,6 +1,6 @@
 # @jsedlacek/logtape-pretty
 
-A [pino-pretty](https://github.com/pinojs/pino-pretty) style formatter for [LogTape](https://logtape.org/).
+Pretty formatter for [LogTape](https://logtape.org/). Produces clean, human-readable log output with colors, timestamps, and structured properties.
 
 ```
 [08:11:46] INFO (my.app): Missing legislation
@@ -75,6 +75,10 @@ getPrettyFormatter({ translateTime: "yyyy-mm-dd HH:MM:ss.l" });
 // Custom message format
 getPrettyFormatter({ messageFormat: "Request to {path} returned {status}" });
 ```
+
+## Acknowledgements
+
+Formatting style and options inspired by [pino-pretty](https://github.com/pinojs/pino-pretty).
 
 ## License
 

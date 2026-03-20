@@ -207,12 +207,12 @@ describe("getPrettyFormatter", () => {
 
     it("formats arrays", () => {
       const result = fmt(makeRecord({ properties: { tags: ["a", "b"] } }));
-      assert.match(result, /tags: \["a", "b"\]/);
+      assert.match(result, /tags: \[\n\s+"a",\n\s+"b"\n\s+\]/);
     });
 
     it("formats nested objects", () => {
       const result = fmt(makeRecord({ properties: { user: { name: "alice" } } }));
-      assert.match(result, /user: \{"name": "alice"\}/);
+      assert.match(result, /user: \{\n\s+"name": "alice"\n\s+\}/);
     });
   });
 

@@ -286,6 +286,25 @@ describe("getPrettyFormatter", () => {
       assert.match(result, /"status": 500/);
     });
 
+    it("formats AggregateError with errors array", () => {
+      const result = fmt(makeRecord({
+        properties: {
+          error: new AggregateError(
+            [new TypeError("Invalid input"), new RangeError("Out of bounds")],
+            "Multiple failures",
+          ),
+        },
+      }));
+      assert.match(result, /message: Multiple failures/);
+      assert.match(result, /errors:/);
+      assert.match(result, /\[0\]:/);
+      assert.match(result, /name: TypeError/);
+      assert.match(result, /message: Invalid input/);
+      assert.match(result, /\[1\]:/);
+      assert.match(result, /name: RangeError/);
+      assert.match(result, /message: Out of bounds/);
+    });
+
     it("formats error-like objects with non-enumerable custom properties", () => {
       const err = Object.create(null);
       Object.defineProperty(err, "code", { value: "ENOENT", enumerable: false });

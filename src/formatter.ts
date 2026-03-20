@@ -1,6 +1,16 @@
-import { type Colorize, createColorize, detectColorSupport, getLevelColorFn } from "./colors.ts";
+import {
+  type Colorize,
+  createColorize,
+  detectColorSupport,
+  getLevelColorFn,
+} from "./colors.ts";
 import { formatTime } from "./time.ts";
-import type { LogLevel, LogRecord, PrettyFormatterOptions, TextFormatter } from "./types.ts";
+import type {
+  LogLevel,
+  LogRecord,
+  PrettyFormatterOptions,
+  TextFormatter,
+} from "./types.ts";
 
 interface FormatterContext {
   readonly colorize: Colorize;
@@ -24,19 +34,29 @@ const LEVEL_LABELS: Record<LogLevel, string> = {
   fatal: "FATAL",
 };
 
-function parseKeySet(input: string | Set<string> | undefined): Set<string> | null {
+function parseKeySet(
+  input: string | Set<string> | undefined,
+): Set<string> | null {
   if (!input) return null;
   if (input instanceof Set) return input.size > 0 ? input : null;
-  const keys = input.split(",").map((k) => k.trim()).filter(Boolean);
+  const keys = input
+    .split(",")
+    .map((k) => k.trim())
+    .filter(Boolean);
   return keys.length > 0 ? new Set(keys) : null;
 }
 
-function formatValue(value: unknown, indent: string | null, depth: number = 0): string {
+function formatValue(
+  value: unknown,
+  indent: string | null,
+  depth: number = 0,
+): string {
   if (depth > 4) return "[...]";
   if (value === null) return "null";
   if (value === undefined) return "undefined";
   if (typeof value === "string") return `"${value}"`;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (typeof value === "number" || typeof value === "boolean")
+    return String(value);
   if (typeof value === "bigint") return `${value}n`;
   if (value instanceof Date) return value.toISOString();
   if (Array.isArray(value)) {
@@ -45,12 +65,21 @@ function formatValue(value: unknown, indent: string | null, depth: number = 0): 
       return `[${value.map((v) => formatValue(v, null, depth + 1)).join(", ")}]`;
     }
     const innerIndent = indent + "  ";
-    const items = value.map((v) => `${innerIndent}${formatValue(v, innerIndent, depth + 1)}`);
+    const items = value.map(
+      (v) => `${innerIndent}${formatValue(v, innerIndent, depth + 1)}`,
+    );
     return `[\n${items.join(",\n")}\n${indent}]`;
   }
   if (typeof value === "object") {
-    if ("toJSON" in value && typeof (value as Record<string, unknown>).toJSON === "function") {
-      return formatValue((value as { toJSON(): unknown }).toJSON(), indent, depth);
+    if (
+      "toJSON" in value &&
+      typeof (value as Record<string, unknown>).toJSON === "function"
+    ) {
+      return formatValue(
+        (value as { toJSON(): unknown }).toJSON(),
+        indent,
+        depth,
+      );
     }
     const entries = Object.entries(value as Record<string, unknown>);
     if (entries.length === 0) return "{}";
@@ -58,13 +87,16 @@ function formatValue(value: unknown, indent: string | null, depth: number = 0): 
       return `{${entries.map(([k, v]) => `"${k}": ${formatValue(v, null, depth + 1)}`).join(", ")}}`;
     }
     const innerIndent = indent + "  ";
-    const items = entries.map(([k, v]) => `${innerIndent}"${k}": ${formatValue(v, innerIndent, depth + 1)}`);
+    const items = entries.map(
+      ([k, v]) =>
+        `${innerIndent}"${k}": ${formatValue(v, innerIndent, depth + 1)}`,
+    );
     return `{\n${items.join(",\n")}\n${indent}}`;
   }
   return String(value);
 }
 
-const ERROR_PRIORITY_KEYS = ["name", "message", "stack", "cause"];
+const ERROR_PRIORITY_KEYS = ["name", "message", "stack", "cause", "errors"];
 
 function collectErrorEntries(value: object): [string, unknown][] {
   const err = value as Record<string, unknown>;
@@ -90,10 +122,7 @@ function formatMessage(record: LogRecord): string {
   return record.message.map(String).join("");
 }
 
-function applyMessageFormat(
-  format: string,
-  record: LogRecord,
-): string {
+function applyMessageFormat(format: string, record: LogRecord): string {
   return format.replace(/\{(\w+(?:\.\w+)*)}/g, (_match, key: string) => {
     const parts = key.split(".");
     let value: unknown = record.properties;
@@ -146,7 +175,11 @@ function assembleLine(
 }
 
 function isErrorLike(value: unknown): value is object {
-  return value != null && typeof value === "object" && ("message" in value || "stack" in value || value instanceof Error);
+  return (
+    value != null &&
+    typeof value === "object" &&
+    ("message" in value || "stack" in value || value instanceof Error)
+  );
 }
 
 function formatErrorEntries(
@@ -166,6 +199,21 @@ function formatErrorEntries(
     } else if (isErrorLike(v)) {
       out += `\n${indent}${ctx.colorize.magenta(`${k}:`)}`;
       out += formatErrorEntries(collectErrorEntries(v), indent + "    ", ctx);
+    } else if (k === "errors" && Array.isArray(v)) {
+      out += `\n${indent}${ctx.colorize.magenta(`${k}:`)}`;
+      for (let i = 0; i < v.length; i++) {
+        const item = v[i];
+        if (isErrorLike(item)) {
+          out += `\n${childIndent}${ctx.colorize.magenta(`[${i}]:`)}`;
+          out += formatErrorEntries(
+            collectErrorEntries(item),
+            childIndent + "    ",
+            ctx,
+          );
+        } else {
+          out += `\n${childIndent}${ctx.colorize.magenta(`[${i}]:`)} ${String(item)}`;
+        }
+      }
     } else if (v != null && typeof v === "object") {
       out += `\n${indent}${ctx.colorize.magenta(`${k}:`)} ${formatValue(v, indent, 0)}`;
     } else {
@@ -175,13 +223,17 @@ function formatErrorEntries(
   return out;
 }
 
-function formatErrorProperty(key: string, value: object, ctx: FormatterContext): string {
+function formatErrorProperty(
+  key: string,
+  value: object,
+  ctx: FormatterContext,
+): string {
   const errEntries = collectErrorEntries(value);
   if (ctx.singleLine) {
     const parts = errEntries.map(([k, v]) =>
       typeof v === "string" && v.includes("\n")
         ? `${k}: ${v.replace(/\n/g, " ")}`
-        : `${k}: ${String(v)}`
+        : `${k}: ${String(v)}`,
     );
     return ` ${ctx.colorize.red(`(${key}: ${parts.join(", ")})`)}`;
   }
@@ -190,7 +242,11 @@ function formatErrorProperty(key: string, value: object, ctx: FormatterContext):
   return out;
 }
 
-function formatRegularProperty(key: string, value: unknown, ctx: FormatterContext): string {
+function formatRegularProperty(
+  key: string,
+  value: unknown,
+  ctx: FormatterContext,
+): string {
   if (ctx.singleLine) {
     return ` ${ctx.colorize.gray(`(${key}: ${formatValue(value, null)})`)}`;
   }
@@ -229,6 +285,13 @@ export function getPrettyFormatter(
   };
 
   return (record: LogRecord): string => {
+    console.log(
+      "record",
+      Object.entries(record.properties).map(([k, v]) => ({
+        [k]: [typeof v, v instanceof Error],
+      })),
+    );
+
     const timestamp = formatTimestamp(record, ctx);
     const level = formatLevel(record, ctx);
     const category = formatCategory(record, ctx);

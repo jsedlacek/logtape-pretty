@@ -48,6 +48,28 @@ function formatValue(value: unknown, indent: string | null, depth: number = 0): 
   return String(value);
 }
 
+function collectErrorEntries(value: object): [string, unknown][] {
+  const err = value as Record<string, unknown>;
+  const seen = new Set<string>();
+  const entries: [string, unknown][] = [];
+  // Error properties are non-enumerable, so extract them explicitly
+  if (value instanceof Error) {
+    for (const k of ["name", "message", "stack"] as const) {
+      if (err[k]) {
+        entries.push([k, err[k]]);
+        seen.add(k);
+      }
+    }
+  }
+  // Add any additional enumerable properties
+  for (const [k, v] of Object.entries(err)) {
+    if (!seen.has(k)) {
+      entries.push([k, v]);
+    }
+  }
+  return entries;
+}
+
 function formatMessage(record: LogRecord): string {
   return record.message.map(String).join("");
 }
@@ -139,20 +161,7 @@ export function getPrettyFormatter(
         if (includeSet && !includeSet.has(key)) continue;
 
         if (errorKeys.has(key) && value != null && typeof value === "object") {
-          const err = value as Record<string, unknown>;
-          const errEntries: [string, unknown][] = [];
-          // Error properties are non-enumerable, so extract them explicitly
-          if (value instanceof Error) {
-            if (err.name) errEntries.push(["name", err.name]);
-            if (err.message) errEntries.push(["message", err.message]);
-            if (err.stack) errEntries.push(["stack", err.stack]);
-          }
-          // Add any additional enumerable properties
-          for (const [k, v] of Object.entries(err)) {
-            if (!errEntries.some(([ek]) => ek === k)) {
-              errEntries.push([k, v]);
-            }
-          }
+          const errEntries = collectErrorEntries(value);
           if (singleLine) {
             const parts = errEntries.map(([k, v]) =>
               typeof v === "string" && v.includes("\n")

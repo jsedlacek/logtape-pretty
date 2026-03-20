@@ -2,8 +2,11 @@
 
 Pretty formatter for [LogTape](https://logtape.org/). Produces clean, human-readable log output with colors, timestamps, and structured properties.
 
-![Example output](assets/example-dark.svg#gh-dark-mode-only)
-![Example output](assets/example-light.svg#gh-light-mode-only)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/jsedlacek/logtape-pretty/main/assets/example-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/jsedlacek/logtape-pretty/main/assets/example-light.svg">
+  <img alt="Example output" src="https://raw.githubusercontent.com/jsedlacek/logtape-pretty/main/assets/example-light.svg">
+</picture>
 
 ## Install
 

@@ -124,8 +124,20 @@ function formatValue(
   return String(value);
 }
 
+function stringifyMessagePart(part: unknown): string {
+  if (part == null) return String(part);
+  if (typeof part !== "object") return String(part);
+  if (part instanceof Error) return part.message;
+  if (part instanceof Date) return part.toISOString();
+  try {
+    return JSON.stringify(part);
+  } catch {
+    return String(part);
+  }
+}
+
 function formatMessage(record: LogRecord): string {
-  return record.message.map(String).join("");
+  return record.message.map(stringifyMessagePart).join("");
 }
 
 function formatTimestamp(record: LogRecord, ctx: FormatterContext): string {

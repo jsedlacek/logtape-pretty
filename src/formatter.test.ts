@@ -55,6 +55,20 @@ describe("getPrettyFormatter", () => {
       }));
       assert.equal(result, "[08:11:46] INFO: User alice logged in from 127.0.0.1\n");
     });
+
+    it("formats object message parts as JSON", () => {
+      const result = fmt(makeRecord({
+        message: [{ method: "GET", url: "/api" }],
+      }));
+      assert.match(result, /\{"method":"GET","url":"\/api"\}/);
+    });
+
+    it("formats Error message parts using error message", () => {
+      const result = fmt(makeRecord({
+        message: [new Error("Not implemented")],
+      }));
+      assert.match(result, /Not implemented/);
+    });
   });
 
   describe("timestamp option", () => {

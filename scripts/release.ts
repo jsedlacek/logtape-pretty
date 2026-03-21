@@ -2,8 +2,10 @@ import { execSync } from "node:child_process";
 import { readFileSync, writeFileSync, unlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { parseArgs } from "node:util";
 
-const BUMP = (process.argv[2] ?? "patch") as "patch" | "minor" | "major";
+const { positionals } = parseArgs({ allowPositionals: true });
+const BUMP = (positionals[0] ?? "patch") as "patch" | "minor" | "major";
 
 if (!["patch", "minor", "major"].includes(BUMP)) {
   console.error("Usage: node --experimental-strip-types scripts/release.ts [patch|minor|major]");

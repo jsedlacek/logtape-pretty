@@ -50,15 +50,14 @@ jobs:
         id: version
         run: |
           VERSION=$(pnpm version ${{ inputs.bump }})
-          VERSION="${VERSION#v}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           git push
-          git push origin "v$VERSION"
+          git push origin "$VERSION"
 
       - name: Create GitHub release
         run: |
-          gh release create "v${{ steps.version.outputs.version }}" \
-            --title "v${{ steps.version.outputs.version }}" \
+          gh release create "${{ steps.version.outputs.version }}" \
+            --title "${{ steps.version.outputs.version }}" \
             --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}
@@ -74,7 +73,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: v${{ needs.release.outputs.version }}
+          ref: ${{ needs.release.outputs.version }}
 
       - uses: pnpm/action-setup@v5
 

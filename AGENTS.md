@@ -17,11 +17,6 @@ pnpm run build        # build with tsup
 pnpm test             # run tests
 pnpm run lint         # type-check with tsc
 pnpm run demo         # run demo with logtape integration
-pnpm run release      # release patch version (bump, tag, push, GitHub release)
-pnpm run release:minor
-pnpm run release:major
-# NOTE: release commands must run with dangerouslyDisableSandbox: true
-# because the script internally runs git push and gh release create
 pnpm run generate-svg # regenerate SVG screenshots
 ```
 

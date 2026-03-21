@@ -1,0 +1,115 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Regenerate SVG screenshots
+        run: |
+          pnpm run generate-svg
+          if [ -n "$(git status --porcelain assets/)" ]; then
+            git add assets/
+            git commit -m "Regenerate SVG screenshots"
+          fi
+
+      - name: Bump version
+        id: version
+        run: |
+          OLD_VERSION=$(node -p "require('./package.json').version")
+          IFS='.' read -r major minor patch <<< "$OLD_VERSION"
+          case "${{ inputs.bump }}" in
+            major) NEW_VERSION="$((major + 1)).0.0" ;;
+            minor) NEW_VERSION="${major}.$((minor + 1)).0" ;;
+            patch) NEW_VERSION="${major}.${minor}.$((patch + 1))" ;;
+          esac
+          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "old_version=$OLD_VERSION" >> "$GITHUB_OUTPUT"
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
+            pkg.version = '$NEW_VERSION';
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+          echo "Bumping version: $OLD_VERSION → $NEW_VERSION"
+
+      - name: Commit, tag, and push
+        run: |
+          git add package.json
+          git commit -m "v${{ steps.version.outputs.version }}"
+          git tag "v${{ steps.version.outputs.version }}"
+          git push
+          git push origin "v${{ steps.version.outputs.version }}"
+
+      - name: Build release notes
+        id: notes
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+          if [ -n "$LAST_TAG" ]; then
+            RANGE="${LAST_TAG}..HEAD"
+          else
+            RANGE="HEAD"
+          fi
+          NOTES_FILE=$(mktemp)
+          echo "## What's Changed" > "$NOTES_FILE"
+          echo "" >> "$NOTES_FILE"
+          git log "$RANGE" --pretty=format:"- %s" --no-merges \
+            | grep -v "Co-Authored-By" \
+            | grep -v "^- v${{ steps.version.outputs.version }}$" \
+            >> "$NOTES_FILE" || true
+          echo "" >> "$NOTES_FILE"
+          echo "" >> "$NOTES_FILE"
+          COMPARE_FROM="${LAST_TAG:-initial}"
+          REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+          echo "**Full Changelog**: https://github.com/${REPO}/compare/${COMPARE_FROM}...v${{ steps.version.outputs.version }}" >> "$NOTES_FILE"
+          echo "notes_file=$NOTES_FILE" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Create GitHub release
+        run: |
+          gh release create "v${{ steps.version.outputs.version }}" \
+            --title "v${{ steps.version.outputs.version }}" \
+            --notes-file "${{ steps.notes.outputs.notes_file }}"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Publish to npm
+        run: |
+          npm install -g npm@latest
+          npm publish --access public

@@ -1,10 +1,12 @@
 import { configure, getConsoleSink, getLogger } from "@logtape/logtape";
 import { getPrettyFormatter } from "../src/index.ts";
 
+const formatter = getPrettyFormatter({ color: true });
+
 await configure({
   sinks: {
     pretty: getConsoleSink({
-      formatter: getPrettyFormatter({ color: true }),
+      formatter,
     }),
   },
   loggers: [

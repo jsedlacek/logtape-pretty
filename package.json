@@ -1,6 +1,6 @@
 {
   "name": "@jsedlacek/logtape-pretty",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Pretty formatter for LogTape",
   "type": "module",
   "exports": {

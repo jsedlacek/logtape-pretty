@@ -17,8 +17,7 @@ npm install @jsedlacek/logtape-pretty
 ## Usage
 
 ```typescript
-import { configure } from "@logtape/logtape";
-import { getStreamSink } from "@logtape/logtape";
+import { configure, getStreamSink } from "@logtape/logtape";
 import { getPrettyFormatter } from "@jsedlacek/logtape-pretty";
 
 await configure({

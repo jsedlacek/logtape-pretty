@@ -29,7 +29,8 @@
     "format": "oxfmt --write src scripts examples",
     "format:check": "oxfmt --check src scripts examples",
     "prepublishOnly": "pnpm run build",
-    "generate-svg": "node --experimental-strip-types scripts/generate-svg.ts"
+    "generate-svg": "node --experimental-strip-types scripts/generate-svg.ts",
+    "version": "git add pnpm-lock.yaml"
   },
   "keywords": [
     "logtape",

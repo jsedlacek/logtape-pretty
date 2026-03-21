@@ -43,6 +43,12 @@ if (branch !== "main") {
 // Read and bump version
 const pkgPath = new URL("../package.json", import.meta.url);
 const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
+
+if (!/^\d+\.\d+\.\d+$/.test(pkg.version)) {
+  console.error(`Error: Invalid version in package.json: ${pkg.version}`);
+  process.exit(1);
+}
+
 const [major, minor, patch] = pkg.version.split(".").map(Number);
 
 const newVersion =

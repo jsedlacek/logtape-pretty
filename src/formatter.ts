@@ -126,16 +126,8 @@ function formatValue(
 
 function stringifyMessagePart(part: unknown): string {
   if (part == null) return String(part);
-  if (typeof part !== "object") return String(part);
-  if (part instanceof Error) return part.message;
-  if (part instanceof Date) return part.toISOString();
-  try {
-    return JSON.stringify(part, (_key, value) =>
-      value instanceof Error ? `${value.name}: ${value.message}` : value,
-    );
-  } catch {
-    return String(part);
-  }
+  if (typeof part === "object") return "";
+  return String(part);
 }
 
 function formatMessage(record: LogRecord): string {
@@ -186,9 +178,6 @@ export function getPrettyFormatter(
     const line = timestamp
       ? `${timestamp} ${level}${category}: ${msg}`
       : `${level}${category}: ${msg}`;
-    const propsInMessage = record.message.some(
-      (part) => part != null && typeof part === "object",
-    );
-    return line + (propsInMessage ? "" : formatProperties(record, ctx)) + "\n";
+    return line + formatProperties(record, ctx) + "\n";
   };
 }

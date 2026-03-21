@@ -56,28 +56,14 @@ describe("getPrettyFormatter", () => {
       assert.equal(result, "[08:11:46] INFO: User alice logged in from 127.0.0.1\n");
     });
 
-    it("formats object message parts as JSON", () => {
-      const result = fmt(makeRecord({
-        message: [{ method: "GET", url: "/api" }],
-      }));
-      assert.match(result, /\{"method":"GET","url":"\/api"\}/);
-    });
-
-    it("formats objects containing Errors in message parts", () => {
+    it("skips object message parts and shows properties below", () => {
       const result = fmt(makeRecord({
         message: [{ error: new Error("Not implemented") }],
         properties: { error: new Error("Not implemented") },
       }));
-      assert.match(result, /"error":"Error: Not implemented"/);
-      // Properties should not be repeated below the message
-      assert.doesNotMatch(result, /\n\s+error:/);
-    });
-
-    it("formats Error message parts using error message", () => {
-      const result = fmt(makeRecord({
-        message: [new Error("Not implemented")],
-      }));
-      assert.match(result, /Not implemented/);
+      // Message should be empty (object skipped), properties shown below
+      assert.doesNotMatch(result, /\[object Object\]/);
+      assert.match(result, /error: Error: Not implemented/);
     });
   });
 

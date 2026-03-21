@@ -25,7 +25,9 @@
     "build": "tsup",
     "test": "node --experimental-strip-types --test src/**/*.test.ts",
     "demo": "node --experimental-strip-types examples/logtape.ts",
-    "lint": "tsc --noEmit",
+    "lint": "tsc --noEmit && oxlint src scripts examples",
+    "format": "oxfmt --write src scripts examples",
+    "format:check": "oxfmt --check src scripts examples",
     "prepublishOnly": "pnpm run build",
     "release": "node --experimental-strip-types scripts/release.ts",
     "release:minor": "node --experimental-strip-types scripts/release.ts minor",
@@ -48,6 +50,8 @@
   "devDependencies": {
     "@logtape/logtape": "^2.0.4",
     "@types/node": "^25.5.0",
+    "oxfmt": "^0.41.0",
+    "oxlint": "^1.56.0",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3"
   },

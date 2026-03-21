@@ -1,15 +1,5 @@
-import {
-  type Colorize,
-  createColorize,
-  detectColorSupport,
-  getLevelColorFn,
-} from "./colors.ts";
-import type {
-  LogLevel,
-  LogRecord,
-  PrettyFormatterOptions,
-  TextFormatter,
-} from "./types.ts";
+import { type Colorize, createColorize, detectColorSupport, getLevelColorFn } from "./colors.ts";
+import type { LogLevel, LogRecord, PrettyFormatterOptions, TextFormatter } from "./types.ts";
 
 interface FormatterContext {
   readonly colorize: Colorize;
@@ -80,44 +70,29 @@ function formatError(err: Error, indent: string, depth: number, colorize: Colori
   return out;
 }
 
-function formatValue(
-  value: unknown,
-  indent: string,
-  depth: number = 0,
-): string {
+function formatValue(value: unknown, indent: string, depth: number = 0): string {
   if (depth > 4) return "[...]";
   if (value === null) return "null";
   if (value === undefined) return "undefined";
   if (typeof value === "string") return `"${value}"`;
-  if (typeof value === "number" || typeof value === "boolean")
-    return String(value);
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
   if (typeof value === "bigint") return `${value}n`;
   if (value instanceof Date) return value.toISOString();
   if (Array.isArray(value)) {
     if (value.length === 0) return "[]";
     const innerIndent = indent + "  ";
-    const items = value.map(
-      (v) => `${innerIndent}${formatValue(v, innerIndent, depth + 1)}`,
-    );
+    const items = value.map((v) => `${innerIndent}${formatValue(v, innerIndent, depth + 1)}`);
     return `[\n${items.join(",\n")}\n${indent}]`;
   }
   if (typeof value === "object") {
-    if (
-      "toJSON" in value &&
-      typeof (value as Record<string, unknown>).toJSON === "function"
-    ) {
-      return formatValue(
-        (value as { toJSON(): unknown }).toJSON(),
-        indent,
-        depth,
-      );
+    if ("toJSON" in value && typeof (value as Record<string, unknown>).toJSON === "function") {
+      return formatValue((value as { toJSON(): unknown }).toJSON(), indent, depth);
     }
     const entries = Object.entries(value as Record<string, unknown>);
     if (entries.length === 0) return "{}";
     const innerIndent = indent + "  ";
     const items = entries.map(
-      ([k, v]) =>
-        `${innerIndent}"${k}": ${formatValue(v, innerIndent, depth + 1)}`,
+      ([k, v]) => `${innerIndent}"${k}": ${formatValue(v, innerIndent, depth + 1)}`,
     );
     return `{\n${items.join(",\n")}\n${indent}}`;
   }
@@ -162,9 +137,7 @@ function formatProperties(record: LogRecord, ctx: FormatterContext): string {
   return result;
 }
 
-export function getPrettyFormatter(
-  options: PrettyFormatterOptions = {},
-): TextFormatter {
+export function getPrettyFormatter(options: PrettyFormatterOptions = {}): TextFormatter {
   const ctx: FormatterContext = {
     colorize: createColorize(options.color ?? detectColorSupport()),
     formatTimestamp: resolveTimestamp(options.timestamp),

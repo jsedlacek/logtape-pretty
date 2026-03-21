@@ -2,8 +2,10 @@ import type { LogLevel } from "./types.ts";
 
 type ColorFn = (s: string) => string;
 
-const esc = (open: number, close: number): ColorFn =>
-  (s) => `\x1b[${open}m${s}\x1b[${close}m`;
+const esc =
+  (open: number, close: number): ColorFn =>
+  (s) =>
+    `\x1b[${open}m${s}\x1b[${close}m`;
 
 const colors = {
   red: esc(31, 39),
@@ -65,10 +67,7 @@ const LEVEL_COLOR_MAP: Record<LogLevel, ColorName> = {
   fatal: "bgRed",
 };
 
-export function getLevelColorFn(
-  level: LogLevel,
-  colorize: Colorize,
-): ColorFn {
+export function getLevelColorFn(level: LogLevel, colorize: Colorize): ColorFn {
   const colorName = LEVEL_COLOR_MAP[level];
   return colorName ? colorize[colorName] : identity;
 }

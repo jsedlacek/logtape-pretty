@@ -30,10 +30,7 @@ describe("getPrettyFormatter", () => {
 
     it("formats with properties", () => {
       const result = fmt(makeRecord({ properties: { identifier: "145/1988" } }));
-      assert.equal(
-        result,
-        '[08:11:46] INFO: Hello, world!\n    identifier: "145/1988"\n',
-      );
+      assert.equal(result, '[08:11:46] INFO: Hello, world!\n    identifier: "145/1988"\n');
     });
 
     it("formats with category", () => {
@@ -50,17 +47,21 @@ describe("getPrettyFormatter", () => {
     });
 
     it("formats template messages with interpolation", () => {
-      const result = fmt(makeRecord({
-        message: ["User ", "alice", " logged in from ", "127.0.0.1"],
-      }));
+      const result = fmt(
+        makeRecord({
+          message: ["User ", "alice", " logged in from ", "127.0.0.1"],
+        }),
+      );
       assert.equal(result, "[08:11:46] INFO: User alice logged in from 127.0.0.1\n");
     });
 
     it("skips object message parts and shows properties below", () => {
-      const result = fmt(makeRecord({
-        message: [{ error: new Error("Not implemented") }],
-        properties: { error: new Error("Not implemented") },
-      }));
+      const result = fmt(
+        makeRecord({
+          message: [{ error: new Error("Not implemented") }],
+          properties: { error: new Error("Not implemented") },
+        }),
+      );
       // Message should be empty (object skipped), properties shown below
       assert.doesNotMatch(result, /\[object Object\]/);
       assert.match(result, /error: Error: Not implemented/);

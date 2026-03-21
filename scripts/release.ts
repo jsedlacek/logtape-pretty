@@ -44,9 +44,11 @@ const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
 const [major, minor, patch] = pkg.version.split(".").map(Number);
 
 const newVersion =
-  BUMP === "major" ? `${major + 1}.0.0` :
-  BUMP === "minor" ? `${major}.${minor + 1}.0` :
-  `${major}.${minor}.${patch + 1}`;
+  BUMP === "major"
+    ? `${major + 1}.0.0`
+    : BUMP === "minor"
+      ? `${major}.${minor + 1}.0`
+      : `${major}.${minor}.${patch + 1}`;
 
 console.log(`Bumping version: ${pkg.version} → ${newVersion}`);
 
@@ -64,7 +66,11 @@ run(`git push origin v${newVersion}`);
 
 // Build release notes from commits since last tag
 const lastTag = (() => {
-  try { return run("git describe --tags --abbrev=0 HEAD~1"); } catch { return ""; }
+  try {
+    return run("git describe --tags --abbrev=0 HEAD~1");
+  } catch {
+    return "";
+  }
 })();
 const commitRange = lastTag ? `${lastTag}..HEAD` : "HEAD";
 const log = run(`git log ${commitRange} --pretty=format:"- %s" --no-merges`)

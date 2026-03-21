@@ -1,10 +1,5 @@
 export { getPrettyFormatter } from "./formatter.ts";
-export type {
-  PrettyFormatterOptions,
-  LogRecord,
-  LogLevel,
-  TextFormatter,
-} from "./types.ts";
+export type { PrettyFormatterOptions, LogRecord, LogLevel, TextFormatter } from "./types.ts";
 
 import { getPrettyFormatter } from "./formatter.ts";
 

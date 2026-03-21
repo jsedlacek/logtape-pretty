@@ -48,8 +48,7 @@ const records = [
         cause: Object.assign(Object.create(Error.prototype), {
           name: "Error",
           message: "Connection refused",
-          stack:
-            "Error: Connection refused\n    at Socket.connect (node:net:1187:16)",
+          stack: "Error: Connection refused\n    at Socket.connect (node:net:1187:16)",
         }),
       }),
     },
@@ -152,7 +151,11 @@ const PADDING_Y = 24;
 const FONT = "'SF Mono', 'Cascadia Code', 'Fira Code', Menlo, Consolas, monospace";
 
 function escapeXml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function generateSvg(lines: Segment[][], theme: Theme): string {
@@ -168,15 +171,18 @@ function generateSvg(lines: Segment[][], theme: Theme): string {
   const width = PADDING_X * 2 + Math.ceil(maxChars * CHAR_WIDTH) + 16;
 
   const parts: string[] = [];
-  parts.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`);
+  parts.push(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
+  );
 
   const strokeAttr = theme.stroke ? ` stroke="${theme.stroke}"` : "";
-  parts.push(`  <rect width="${width}" height="${height}" rx="8" fill="${theme.bg}"${strokeAttr}/>`);
+  parts.push(
+    `  <rect width="${width}" height="${height}" rx="8" fill="${theme.bg}"${strokeAttr}/>`,
+  );
 
   for (let i = 0; i < lines.length; i++) {
     const y = PADDING_Y + i * LINE_HEIGHT;
     const segments = lines[i];
-    let x = PADDING_X;
 
     // Check if this line has a bgRed segment (FATAL)
     const hasBg = segments.some((s) => s.bg);
@@ -192,12 +198,14 @@ function generateSvg(lines: Segment[][], theme: Theme): string {
       const rectX = PADDING_X + charsBeforeBg * CHAR_WIDTH;
       const rectWidth = Math.ceil(bgSeg.text.length * CHAR_WIDTH) + 4;
       const bgColor = theme.colors[bgSeg.bg!] ?? theme.defaultFill;
-      parts.push(`  <rect x="${Math.round(rectX - 1)}" y="${y - 13}" width="${rectWidth}" height="${17}" rx="2" fill="${bgColor}"/>`);
+      parts.push(
+        `  <rect x="${Math.round(rectX - 1)}" y="${y - 13}" width="${rectWidth}" height="${17}" rx="2" fill="${bgColor}"/>`,
+      );
 
       // Render the whole line as a single <text> with <tspan>s, same as non-bg lines
       let textLine = `  <text x="${PADDING_X}" y="${y}" xml:space="preserve" font-family="${FONT}" font-size="13">`;
       for (const seg of segments) {
-        const fill = seg.bg ? theme.fatalText : (seg.fg ? theme.colors[seg.fg] : theme.defaultFill);
+        const fill = seg.bg ? theme.fatalText : seg.fg ? theme.colors[seg.fg] : theme.defaultFill;
         textLine += `<tspan fill="${fill ?? theme.defaultFill}">${escapeXml(seg.text)}</tspan>`;
       }
       textLine += `</text>`;

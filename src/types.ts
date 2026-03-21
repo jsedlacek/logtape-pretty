@@ -1,10 +1,4 @@
-export type LogLevel =
-  | "trace"
-  | "debug"
-  | "info"
-  | "warning"
-  | "error"
-  | "fatal";
+export type LogLevel = "trace" | "debug" | "info" | "warning" | "error" | "fatal";
 
 export interface LogRecord {
   readonly category: readonly string[];
@@ -23,11 +17,5 @@ export interface PrettyFormatterOptions {
   /** Timestamp format: a preset name, a custom formatting function, or `false` to disable.
    *  Presets: `"time"` (HH:MM:ss), `"datetime"` (yyyy-mm-dd HH:MM:ss), `"date"` (yyyy-mm-dd).
    *  Defaults to `"time"`. */
-  timestamp?:
-    | "time"
-    | "datetime"
-    | "date"
-    | ((date: Date) => string)
-    | false
-    | undefined;
+  timestamp?: "time" | "datetime" | "date" | ((date: Date) => string) | false | undefined;
 }

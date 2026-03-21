@@ -35,7 +35,6 @@
     "logtape",
     "formatter",
     "pretty",
-    "pino-pretty",
     "logging"
   ],
   "license": "MIT",

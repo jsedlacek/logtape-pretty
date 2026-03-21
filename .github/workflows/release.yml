@@ -50,9 +50,9 @@ jobs:
         id: version
         run: |
           VERSION=$(pnpm version ${{ inputs.bump }})
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           git push
           git push origin "$VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub release
         run: |

@@ -49,8 +49,8 @@ jobs:
       - name: Bump version
         id: version
         run: |
-          pnpm version ${{ inputs.bump }}
-          VERSION=$(node -p "require('./package.json').version")
+          VERSION=$(pnpm version ${{ inputs.bump }})
+          VERSION="${VERSION#v}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           git push
           git push origin "v$VERSION"

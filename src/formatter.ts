@@ -174,10 +174,11 @@ export function getPrettyFormatter(
     const timestamp = formatTimestamp(record, ctx);
     const level = formatLevel(record, ctx);
     const category = formatCategory(record, ctx);
-    const msg = ctx.colorize.cyan(formatMessage(record));
+    const rawMsg = formatMessage(record);
+    const msgSuffix = rawMsg ? `: ${ctx.colorize.cyan(rawMsg)}` : "";
     const line = timestamp
-      ? `${timestamp} ${level}${category}: ${msg}`
-      : `${level}${category}: ${msg}`;
+      ? `${timestamp} ${level}${category}${msgSuffix}`
+      : `${level}${category}${msgSuffix}`;
     return line + formatProperties(record, ctx) + "\n";
   };
 }

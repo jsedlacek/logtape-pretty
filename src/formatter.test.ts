@@ -66,8 +66,11 @@ describe("getPrettyFormatter", () => {
     it("formats objects containing Errors in message parts", () => {
       const result = fmt(makeRecord({
         message: [{ error: new Error("Not implemented") }],
+        properties: { error: new Error("Not implemented") },
       }));
       assert.match(result, /"error":"Error: Not implemented"/);
+      // Properties should not be repeated below the message
+      assert.doesNotMatch(result, /\n\s+error:/);
     });
 
     it("formats Error message parts using error message", () => {

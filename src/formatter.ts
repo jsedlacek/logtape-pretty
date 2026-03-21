@@ -186,6 +186,9 @@ export function getPrettyFormatter(
     const line = timestamp
       ? `${timestamp} ${level}${category}: ${msg}`
       : `${level}${category}: ${msg}`;
-    return line + formatProperties(record, ctx) + "\n";
+    const propsInMessage = record.message.some(
+      (part) => part != null && typeof part === "object",
+    );
+    return line + (propsInMessage ? "" : formatProperties(record, ctx)) + "\n";
   };
 }

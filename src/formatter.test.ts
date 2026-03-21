@@ -63,6 +63,13 @@ describe("getPrettyFormatter", () => {
       assert.match(result, /\{"method":"GET","url":"\/api"\}/);
     });
 
+    it("formats objects containing Errors in message parts", () => {
+      const result = fmt(makeRecord({
+        message: [{ error: new Error("Not implemented") }],
+      }));
+      assert.match(result, /"error":"Error: Not implemented"/);
+    });
+
     it("formats Error message parts using error message", () => {
       const result = fmt(makeRecord({
         message: [new Error("Not implemented")],

@@ -130,7 +130,9 @@ function stringifyMessagePart(part: unknown): string {
   if (part instanceof Error) return part.message;
   if (part instanceof Date) return part.toISOString();
   try {
-    return JSON.stringify(part);
+    return JSON.stringify(part, (_key, value) =>
+      value instanceof Error ? `${value.name}: ${value.message}` : value,
+    );
   } catch {
     return String(part);
   }
